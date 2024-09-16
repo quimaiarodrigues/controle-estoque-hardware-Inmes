@@ -43,6 +43,10 @@ def abrir_aba_listar_componentes(projeto_list, componente_dict):
     # Definindo cabeçalhos da tabela
     for coluna in colunas:
         tabela.heading(coluna, text=coluna)
+        if coluna in ("Código", "Quantidade por Placa", "Quantidade Disponível"):
+            tabela.column(coluna, anchor="center")
+        else:
+            tabela.column(coluna, anchor="w")
 
     tabela.pack(fill="both", expand=True)
 
