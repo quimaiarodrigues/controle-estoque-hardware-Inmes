@@ -24,14 +24,36 @@ def abrir_janela_editar_projeto(projeto_list, componente_dict):
     editar_janela.title("Editar Nome do Projeto")
     editar_janela.geometry("400x300")
     
-    tk.Label(editar_janela, text="Selecione o Projeto para Editar:").pack(anchor="w", padx=10, pady=5)
+    tk.Label(editar_janela, text="Selecione o Projeto para Editar:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
     lista_projetos = tk.Listbox(editar_janela)
-    lista_projetos.pack(fill="both", expand=True, padx=10, pady=5)
+    lista_projetos.grid(row=1, column=0, sticky="nsew", padx=10, pady=5)
     atualizar_lista_projetos()
     
-    tk.Label(editar_janela, text="Novo Nome do Projeto:").pack(anchor="w", padx=10, pady=5)
+    tk.Label(editar_janela, text="Novo Nome do Projeto:").grid(row=2, column=0, sticky="w", padx=10, pady=5)
     novo_nome_entry = tk.Entry(editar_janela)
-    novo_nome_entry.pack(fill="x", padx=10, pady=5)
+    novo_nome_entry.grid(row=3, column=0, sticky="ew", padx=10, pady=5)
     
-    tk.Button(editar_janela, text="Salvar", command=salvar_edicao).pack(pady=10)
-    tk.Button(editar_janela, text="Cancelar", command=editar_janela.destroy).pack(pady=10)
+    # Criar um Frame para os botões
+    button_frame = tk.Frame(editar_janela)
+    button_frame.grid(row=4, column=0, pady=10, padx=10, sticky="nsew")
+    
+    # Adicionar botões ao Frame
+    salvar_button = tk.Button(button_frame, text="Salvar", command=salvar_edicao)
+    cancelar_button = tk.Button(button_frame, text="Cancelar", command=editar_janela.destroy)
+    
+    salvar_button.grid(row=0, column=0, padx=5, pady=10)
+    cancelar_button.grid(row=0, column=1, padx=5, pady=10)
+    
+    # Configurar o Frame para expansão
+    button_frame.grid_rowconfigure(0, weight=1)
+    button_frame.grid_columnconfigure(0, weight=1)
+    button_frame.grid_columnconfigure(1, weight=1)
+    
+    # Configurar a janela para expansão
+    editar_janela.grid_rowconfigure(4, weight=0)
+    editar_janela.grid_columnconfigure(0, weight=1)
+    
+    # Configurar a expansão do Frame dos botões
+    button_frame.grid(sticky="nsew")
+    
+    editar_janela.mainloop()

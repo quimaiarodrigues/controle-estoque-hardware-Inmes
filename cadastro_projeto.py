@@ -42,8 +42,21 @@ def abrir_janela_cadastro_projeto(projeto_list, componente_dict):
                 elif novo_nome in projeto_list:
                     messagebox.showwarning("Aviso", "Já existe um projeto com esse nome.")
 
-            tk.Button(editar_janela, text="Salvar", command=salvar_edicao).pack(side="left", padx=10, pady=10)
-            tk.Button(editar_janela, text="Cancelar", command=editar_janela.destroy).pack(side="right", padx=10, pady=10)
+            # Frame para os botões "Salvar" e "Cancelar"
+            frame_botoes_edicao = tk.Frame(editar_janela)
+            frame_botoes_edicao.pack(pady=10, fill="x")
+
+            tk.Button(frame_botoes_edicao, text="Salvar", command=salvar_edicao).pack(side="left", padx=10)
+            tk.Button(frame_botoes_edicao, text="Cancelar", command=editar_janela.destroy).pack(side="left", padx=10)
+
+    def deletar_projeto():
+        projeto_selecionado = lista_projetos.get(tk.ACTIVE)
+        if projeto_selecionado:
+            confirmar = messagebox.askyesno("Confirmar Exclusão", f"Você tem certeza que deseja excluir o projeto '{projeto_selecionado}'?")
+            if confirmar:
+                projeto_list.remove(projeto_selecionado)
+                componente_dict.pop(projeto_selecionado, None)
+                atualizar_lista_projetos()
 
     janela_projeto = tk.Toplevel()
     janela_projeto.title("Cadastrar Projeto")
@@ -53,12 +66,14 @@ def abrir_janela_cadastro_projeto(projeto_list, componente_dict):
     nome_entry = tk.Entry(janela_projeto)
     nome_entry.pack(fill="x", padx=10, pady=5)
 
-    # Frame para os botões "Salvar" e "Editar Projeto"
+    # Frame para os botões "Salvar", "Editar Projeto", "Deletar Projeto" e "Cancelar"
     frame_botoes = tk.Frame(janela_projeto)
     frame_botoes.pack(pady=10)
 
     tk.Button(frame_botoes, text="Salvar", command=salvar_projeto).pack(side="left", padx=10)
     tk.Button(frame_botoes, text="Editar Projeto", command=editar_projeto).pack(side="left", padx=10)
+    tk.Button(frame_botoes, text="Deletar Projeto", command=deletar_projeto).pack(side="left", padx=10)
+    tk.Button(frame_botoes, text="Cancelar", command=janela_projeto.destroy).pack(side="left", padx=10)
 
     tk.Label(janela_projeto, text="Projetos Cadastrados:").pack(anchor="w", padx=10, pady=5)
     lista_projetos = tk.Listbox(janela_projeto)
