@@ -1,43 +1,68 @@
 import tkinter as tk
+from tkinter import messagebox
 
-def salvar_projeto(nome_projeto, projeto_list, componente_dict):
-    if nome_projeto:
-        projeto_list.append(nome_projeto)
-        componente_dict[nome_projeto] = []  # Inicializa a lista de componentes para o novo projeto
-        print(f"Projeto '{nome_projeto}' salvo.")
-    else:
-        print("Preencha o nome do projeto.")
+def abrir_janela_cadastro_projeto(projeto_list, componente_dict):
+    def salvar_projeto():
+        nome_projeto = nome_entry.get().strip()
+        if nome_projeto and nome_projeto not in projeto_list:
+            projeto_list.append(nome_projeto)
+            projeto_list.sort()
+            componente_dict[nome_projeto] = []
+            atualizar_lista_projetos()
+            nome_entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Aviso", "O nome do projeto já existe ou está vazio.")
 
-def abrir_janela(projeto_list, componente_dict):
-    janela = tk.Toplevel()
-    janela.title("Cadastrar Projeto")
-    janela.geometry("500x250")
+    def atualizar_lista_projetos():
+        lista_projetos.delete(0, tk.END)
+        for projeto in projeto_list:
+            lista_projetos.insert(tk.END, projeto)
 
-    # Adicionando logo
-    try:
-        logo = tk.PhotoImage(file="logo.png")
-        logo = logo.subsample(4, 4)
-        tk.Label(janela, image=logo).pack(pady=10)
-        janela.logo = logo
-    except tk.TclError:
-        print("Erro ao carregar a imagem do logotipo para o cadastro do projeto.")
+    def editar_projeto():
+        projeto_selecionado = lista_projetos.get(tk.ACTIVE)
+        if projeto_selecionado:
+            editar_janela = tk.Toplevel()
+            editar_janela.title("Editar Nome do Projeto")
+            editar_janela.geometry("400x200")
 
-    # Adicionando texto abaixo do logo
-    texto = "Cadastro de Projeto"
-    tk.Label(janela, text=texto, font=("Arial", 16)).pack(pady=10)
+            tk.Label(editar_janela, text="Novo Nome do Projeto:").pack(anchor="w", padx=10, pady=5)
+            novo_nome_entry = tk.Entry(editar_janela)
+            novo_nome_entry.pack(fill="x", padx=10, pady=5)
+            novo_nome_entry.insert(0, projeto_selecionado)
 
-    tk.Label(janela, text="Nome do Projeto:").pack(anchor="w", padx=10, pady=5)
-    entry_nome_projeto = tk.Entry(janela)
-    entry_nome_projeto.pack(fill="x", padx=10, pady=5)
+            def salvar_edicao():
+                novo_nome = novo_nome_entry.get().strip()
+                if novo_nome and novo_nome not in projeto_list and projeto_selecionado:
+                    projeto_list.remove(projeto_selecionado)
+                    projeto_list.append(novo_nome)
+                    projeto_list.sort()
+                    componente_dict[novo_nome] = componente_dict.pop(projeto_selecionado, [])
+                    atualizar_lista_projetos()
+                    editar_janela.destroy()
+                elif novo_nome in projeto_list:
+                    messagebox.showwarning("Aviso", "Já existe um projeto com esse nome.")
 
-    # Frame para organizar os botões "Salvar" e "Cancelar"
-    button_frame = tk.Frame(janela)
-    button_frame.pack(pady=10)
+            tk.Button(editar_janela, text="Salvar", command=salvar_edicao).pack(side="left", padx=10, pady=10)
+            tk.Button(editar_janela, text="Cancelar", command=editar_janela.destroy).pack(side="right", padx=10, pady=10)
 
-    # Botão para salvar o projeto
-    tk.Button(button_frame, text="Salvar", command=lambda: salvar_projeto(entry_nome_projeto.get(), projeto_list, componente_dict)).pack(side="left", padx=10)
+    janela_projeto = tk.Toplevel()
+    janela_projeto.title("Cadastrar Projeto")
+    janela_projeto.geometry("400x300")
 
-    # Botão para cancelar (fechar a janela)
-    tk.Button(button_frame, text="Cancelar", command=janela.destroy).pack(side="left", padx=10)
+    tk.Label(janela_projeto, text="Nome do Projeto:").pack(anchor="w", padx=10, pady=5)
+    nome_entry = tk.Entry(janela_projeto)
+    nome_entry.pack(fill="x", padx=10, pady=5)
 
-    janela.mainloop()
+    # Frame para os botões "Salvar" e "Editar Projeto"
+    frame_botoes = tk.Frame(janela_projeto)
+    frame_botoes.pack(pady=10)
+
+    tk.Button(frame_botoes, text="Salvar", command=salvar_projeto).pack(side="left", padx=10)
+    tk.Button(frame_botoes, text="Editar Projeto", command=editar_projeto).pack(side="left", padx=10)
+
+    tk.Label(janela_projeto, text="Projetos Cadastrados:").pack(anchor="w", padx=10, pady=5)
+    lista_projetos = tk.Listbox(janela_projeto)
+    lista_projetos.pack(fill="both", expand=True, padx=10, pady=5)
+    atualizar_lista_projetos()
+
+    janela_projeto.mainloop()
