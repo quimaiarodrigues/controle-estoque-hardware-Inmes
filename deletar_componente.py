@@ -77,7 +77,7 @@ def abrir_janela(projeto_list, componente_dict):
         else:
             messagebox.showwarning("Seleção inválida", "Selecione um componente para deletar.")
 
-    # Frame para os botões de atualizar e deletar
+    # Frame para os botões de atualizar, deletar e cancelar
     frame_botoes = tk.Frame(janela_deletar)
     frame_botoes.pack(pady=10)
 
@@ -86,5 +86,8 @@ def abrir_janela(projeto_list, componente_dict):
 
     # Botão para deletar o componente selecionado
     tk.Button(frame_botoes, text="Deletar Componente", command=deletar_componente).pack(side=tk.LEFT, padx=5)
+
+    # Botão para cancelar e fechar a janela
+    tk.Button(frame_botoes, text="Cancelar", command=janela_deletar.destroy).pack(side=tk.LEFT, padx=5)
 
     janela_deletar.mainloop()
