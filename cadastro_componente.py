@@ -1,15 +1,21 @@
 import tkinter as tk
+from tkinter import messagebox
 
 def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, componente_dict):
     if projeto and nome_componente and codigo_componente and quantidade_por_placa and quantidade_disponivel:
         if projeto in componente_dict:
+            # Verifica se o código do componente já existe
+            for comp in componente_dict[projeto]:
+                if comp["codigo"] == codigo_componente:
+                    messagebox.showwarning("Aviso", "Código de componente já existente para este projeto.")
+                    return
             componente_dict[projeto].append({
                 "nome": nome_componente,
                 "codigo": codigo_componente,
                 "quantidade_por_placa": int(quantidade_por_placa),
                 "quantidade_disponivel": int(quantidade_disponivel)
             })
-            print(f"Componente '{nome_componente}' salvo para o projeto '{projeto}'.")
+            # Mensagem de confirmação removida
         else:
             print(f"Projeto '{projeto}' não encontrado.")
     else:
