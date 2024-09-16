@@ -60,7 +60,7 @@ def abrir_janela_cadastro_projeto(projeto_list, componente_dict):
 
     janela_projeto = tk.Toplevel()
     janela_projeto.title("Cadastrar Projeto")
-    janela_projeto.geometry("400x300")
+    janela_projeto.geometry("600x400")
 
     tk.Label(janela_projeto, text="Nome do Projeto:").pack(anchor="w", padx=10, pady=5)
     nome_entry = tk.Entry(janela_projeto)

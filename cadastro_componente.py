@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox
 
-def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, componente_dict):
+def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, componente_dict, label_status):
     if projeto and nome_componente and codigo_componente and quantidade_por_placa and quantidade_disponivel:
         if projeto in componente_dict:
             # Verifica se o código do componente já existe
@@ -15,11 +15,16 @@ def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_po
                 "quantidade_por_placa": int(quantidade_por_placa),
                 "quantidade_disponivel": int(quantidade_disponivel)
             })
-            # Mensagem de confirmação removida
+            # Atualiza o label com a mensagem sutil
+            label_status.config(text="Componente cadastrado com sucesso.", fg="green")
+            # Remove a mensagem após 3 segundos
+            label_status.after(3000, lambda: label_status.config(text=""))
         else:
             print(f"Projeto '{projeto}' não encontrado.")
     else:
-        print("Preencha todos os campos.")
+        label_status.config(text="Preencha todos os campos.", fg="red")
+        # Remove a mensagem após 3 segundos
+        label_status.after(3000, lambda: label_status.config(text=""))
 
 def atualizar_projetos(projeto_list, menu_projeto, projeto_selecionado):
     menu_projeto["menu"].delete(0, "end")
@@ -29,7 +34,7 @@ def atualizar_projetos(projeto_list, menu_projeto, projeto_selecionado):
 def abrir_janela(projeto_list, componente_dict):
     janela = tk.Toplevel()
     janela.title("Cadastrar Componente")
-    janela.geometry("500x500")
+    janela.geometry("600x525")
 
     # Adicionando logo
     try:
@@ -75,6 +80,10 @@ def abrir_janela(projeto_list, componente_dict):
     frame_botoes = tk.Frame(janela)
     frame_botoes.pack(pady=10)
 
+    # Label para mostrar o status do cadastro
+    label_status = tk.Label(janela, text="", font=("Arial", 10))
+    label_status.pack(pady=5)
+
     # Botão Salvar
     tk.Button(frame_botoes, text="Salvar", command=lambda: salvar_componente(
         projeto_selecionado.get(),
@@ -82,7 +91,8 @@ def abrir_janela(projeto_list, componente_dict):
         entry_codigo_componente.get(),
         entry_quantidade_por_placa.get(),
         entry_quantidade_disponivel.get(),
-        componente_dict
+        componente_dict,
+        label_status
     )).pack(side=tk.LEFT, padx=5)
 
     # Botão Cancelar

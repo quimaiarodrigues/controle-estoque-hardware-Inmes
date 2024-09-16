@@ -41,8 +41,8 @@ def abrir_janela_editar_projeto(projeto_list, componente_dict):
     salvar_button = tk.Button(button_frame, text="Salvar", command=salvar_edicao)
     cancelar_button = tk.Button(button_frame, text="Cancelar", command=editar_janela.destroy)
     
-    salvar_button.grid(row=0, column=0, padx=5, pady=10)
-    cancelar_button.grid(row=0, column=1, padx=5, pady=10)
+    salvar_button.grid(row=0, column=0, padx=10, pady=10)
+    cancelar_button.grid(row=0, column=1, padx=10, pady=10)
     
     # Configurar o Frame para expansão
     button_frame.grid_rowconfigure(0, weight=1)
@@ -50,10 +50,19 @@ def abrir_janela_editar_projeto(projeto_list, componente_dict):
     button_frame.grid_columnconfigure(1, weight=1)
     
     # Configurar a janela para expansão
-    editar_janela.grid_rowconfigure(4, weight=0)
+    editar_janela.grid_rowconfigure(1, weight=1)
     editar_janela.grid_columnconfigure(0, weight=1)
     
-    # Configurar a expansão do Frame dos botões
-    button_frame.grid(sticky="nsew")
-    
     editar_janela.mainloop()
+
+# Exemplo de uso (simulação)
+projeto_list = ["Projeto 1", "Projeto 2", "Projeto 3"]
+componente_dict = {
+    "Projeto 1": [],
+    "Projeto 2": [],
+    "Projeto 3": []
+}
+
+root = tk.Tk()
+root.withdraw()  # Esconde a janela principal
+abrir_janela_editar_projeto(projeto_list, componente_dict)

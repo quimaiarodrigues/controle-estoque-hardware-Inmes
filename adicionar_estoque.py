@@ -33,7 +33,7 @@ def adicionar_estoque(projeto, codigo_componente, quantidade, componentes_dict):
 def abrir_janela(projeto_list, componentes_dict):
     janela = tk.Toplevel()
     janela.title("Adicionar Estoque")
-    janela.geometry("500x480")
+    janela.geometry("600x460")
 
     # Adicionando logo
     try:

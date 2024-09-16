@@ -25,7 +25,7 @@ def debitar_componentes(projeto_list, componentes_dict):
 
     janela_debito = tk.Toplevel()
     janela_debito.title("Debitar Componentes")
-    janela_debito.geometry("400x300")
+    janela_debito.geometry("400x130")
 
     tk.Label(janela_debito, text="Selecione o Projeto:").pack(anchor="w", padx=10, pady=5)
     
