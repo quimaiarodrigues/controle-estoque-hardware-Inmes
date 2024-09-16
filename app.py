@@ -5,7 +5,7 @@ import cadastro_componente
 import adicionar_estoque
 import listar_componentes
 import deletar_componente
-import editar_projeto  # Importa o módulo para editar projetos
+import debitar_componentes  # Importar o módulo correto
 
 # Inicialização das listas e dicionários
 projetos = []  # Lista de projetos
@@ -26,8 +26,8 @@ def abrir_listar_componentes():
 def abrir_deletar_componente():
     deletar_componente.abrir_janela(projetos, componentes)
 
-def abrir_editar_projeto():
-    editar_projeto.abrir_janela_editar_projeto(projetos, componentes)
+def abrir_debitar_componentes():
+    debitar_componentes.debitar_componentes(projetos, componentes)  # Chame a função correta
 
 # Criação da janela principal
 root = tk.Tk()
@@ -63,6 +63,8 @@ button_listar_componentes.grid(row=3, column=1, padx=10, pady=10, sticky="nsew")
 button_deletar_componente = tk.Button(root, text="Deletar Componente", width=20, command=abrir_deletar_componente)
 button_deletar_componente.grid(row=4, column=0, padx=10, pady=10, sticky="nsew")
 
+button_debitar_componentes = tk.Button(root, text="Debitar Componentes", width=20, command=abrir_debitar_componentes)
+button_debitar_componentes.grid(row=4, column=1, padx=10, pady=10, sticky="nsew")
 
 # Ajustar as colunas e linhas para expandirem com a janela
 root.grid_columnconfigure(0, weight=1)

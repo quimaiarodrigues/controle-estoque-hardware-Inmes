@@ -65,7 +65,14 @@ def abrir_aba_listar_componentes(projeto_list, componente_dict):
         else:
             tk.Label(janela_listar, text=f"Nenhum componente encontrado para o projeto '{projeto}'.").pack(pady=10)
 
+    # Frame para botões "Atualizar" e "Cancelar"
+    frame_botoes = tk.Frame(janela_listar)
+    frame_botoes.pack(pady=10)
+
     # Botão para atualizar a tabela
-    tk.Button(janela_listar, text="Atualizar", command=atualizar_tabela).pack(pady=10)
+    tk.Button(frame_botoes, text="Atualizar", command=atualizar_tabela).pack(side="left", padx=10)
+
+    # Botão para cancelar e fechar a janela
+    tk.Button(frame_botoes, text="Cancelar", command=janela_listar.destroy).pack(side="left", padx=10)
 
     janela_listar.mainloop()
