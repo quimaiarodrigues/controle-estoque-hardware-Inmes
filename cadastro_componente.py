@@ -1,37 +1,67 @@
 import tkinter as tk
 from tkinter import messagebox
+import sqlite3
 
-def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, componente_dict, label_status):
+# Função para conectar ao banco de dados
+def conectar_banco():
+    conn = sqlite3.connect('estoque.db')
+    return conn
+
+def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, label_status):
     if projeto and nome_componente and codigo_componente and quantidade_por_placa and quantidade_disponivel:
-        if projeto in componente_dict:
-            # Verifica se o código do componente já existe
-            for comp in componente_dict[projeto]:
-                if comp["codigo"] == codigo_componente:
-                    messagebox.showwarning("Aviso", "Código de componente já existente para este projeto.")
-                    return
-            componente_dict[projeto].append({
-                "nome": nome_componente,
-                "codigo": codigo_componente,
-                "quantidade_por_placa": int(quantidade_por_placa),
-                "quantidade_disponivel": int(quantidade_disponivel)
-            })
-            # Atualiza o label com a mensagem sutil
-            label_status.config(text="Componente cadastrado com sucesso.", fg="green")
-            # Remove a mensagem após 3 segundos
-            label_status.after(3000, lambda: label_status.config(text=""))
+        try:
+            quantidade_por_placa = int(quantidade_por_placa)
+            quantidade_disponivel = int(quantidade_disponivel)
+        except ValueError:
+            messagebox.showwarning("Aviso", "As quantidades devem ser números inteiros.")
+            return
+
+        conn = conectar_banco()
+        cursor = conn.cursor()
+
+        # Verificar se o código do componente já existe para o projeto
+        cursor.execute("""
+            SELECT c.codigo 
+            FROM Componentes c 
+            JOIN Projetos p ON c.id_projeto = p.id 
+            WHERE c.codigo = ? AND p.nome = ?
+        """, (codigo_componente, projeto))
+
+        if cursor.fetchone():
+            messagebox.showwarning("Aviso", "Código de componente já existente para este projeto.")
         else:
-            print(f"Projeto '{projeto}' não encontrado.")
+            # Inserir novo componente
+            cursor.execute("""
+                INSERT INTO Componentes (nome, codigo, quantidade_por_placa, quantidade_disponivel, id_projeto) 
+                VALUES (?, ?, ?, ?, (SELECT id FROM Projetos WHERE nome = ?))
+            """, (nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, projeto))
+            conn.commit()
+
+            label_status.config(text="Componente cadastrado com sucesso.", fg="green")
+            label_status.after(3000, lambda: label_status.config(text=""))
+
+        conn.close()
     else:
         label_status.config(text="Preencha todos os campos.", fg="red")
-        # Remove a mensagem após 3 segundos
         label_status.after(3000, lambda: label_status.config(text=""))
 
-def atualizar_projetos(projeto_list, menu_projeto, projeto_selecionado):
+
+# Função para atualizar a lista de projetos no menu de seleção
+def atualizar_projetos(menu_projeto, projeto_selecionado):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+
+    # Obter a lista de projetos do banco de dados
+    cursor.execute("SELECT nome FROM Projetos")
+    projeto_list = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
     menu_projeto["menu"].delete(0, "end")
     for projeto in projeto_list:
         menu_projeto["menu"].add_command(label=projeto, command=tk._setit(projeto_selecionado, projeto))
 
-def abrir_janela(projeto_list, componente_dict):
+# Função para abrir a janela de cadastro de componentes
+def abrir_janela():
     janela = tk.Toplevel()
     janela.title("Cadastrar Componente")
     janela.geometry("600x525")
@@ -52,12 +82,13 @@ def abrir_janela(projeto_list, componente_dict):
     # Adicionando seleção de projeto
     tk.Label(janela, text="Seleção do Projeto:").pack(anchor="w", padx=10, pady=5)
     projeto_selecionado = tk.StringVar()
-    projeto_selecionado.set(projeto_list[0] if projeto_list else "Nenhum Projeto")
-    menu_projeto = tk.OptionMenu(janela, projeto_selecionado, *projeto_list)
+
+    # Menu dropdown de projetos
+    menu_projeto = tk.OptionMenu(janela, projeto_selecionado, "")
     menu_projeto.pack(fill="x", padx=10, pady=5)
 
-    # Atualizar os projetos quando a lista mudar
-    atualizar_projetos(projeto_list, menu_projeto, projeto_selecionado)
+    # Atualizar os projetos
+    atualizar_projetos(menu_projeto, projeto_selecionado)
 
     # Campos de entrada de dados
     tk.Label(janela, text="Nome do Componente:").pack(anchor="w", padx=10, pady=5)
@@ -91,7 +122,6 @@ def abrir_janela(projeto_list, componente_dict):
         entry_codigo_componente.get(),
         entry_quantidade_por_placa.get(),
         entry_quantidade_disponivel.get(),
-        componente_dict,
         label_status
     )).pack(side=tk.LEFT, padx=5)
 

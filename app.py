@@ -5,34 +5,32 @@ import cadastro_componente
 import adicionar_estoque
 import listar_componentes
 import deletar_componente
-import debitar_componentes  # Importar o módulo correto
-
-# Inicialização das listas e dicionários
-projetos = []  # Lista de projetos
-componentes = {}  # Dicionário para armazenar componentes por projeto
+import debitar_componentes
 
 def abrir_cadastro_projeto():
-    cadastro_projeto.abrir_janela_cadastro_projeto(projetos, componentes)
+    cadastro_projeto.abrir_janela_cadastro_projeto()
 
 def abrir_cadastro_componente():
-    cadastro_componente.abrir_janela(projetos, componentes)
+    cadastro_componente.abrir_janela()
 
 def abrir_adicionar_estoque():
-    adicionar_estoque.abrir_janela(projetos, componentes)
+    adicionar_estoque.abrir_janela()
 
 def abrir_listar_componentes():
-    listar_componentes.abrir_aba_listar_componentes(projetos, componentes)
+    # Obtém a lista de projetos
+    projetos = listar_componentes.obter_lista_projetos()
+    listar_componentes.abrir_aba_listar_componentes(projetos)
 
 def abrir_deletar_componente():
-    deletar_componente.abrir_janela(projetos, componentes)
+    deletar_componente.abrir_janela()
 
 def abrir_debitar_componentes():
-    debitar_componentes.debitar_componentes(projetos, componentes)  # Chame a função correta
+    debitar_componentes.debitar_componentes()
 
 # Criação da janela principal
 root = tk.Tk()
 root.title("Controle de Estoque")
-root.geometry("600x400")
+root.geometry("800x400")
 
 # Adicionando logo
 try:

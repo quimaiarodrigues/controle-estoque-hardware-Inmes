@@ -1,7 +1,49 @@
 import tkinter as tk
 from tkinter import ttk
+import sqlite3
 
-def abrir_aba_listar_componentes(projeto_list, componente_dict):
+def conectar_banco():
+    """Conecta ao banco de dados SQLite e retorna a conexão."""
+    return sqlite3.connect('estoque.db')
+
+def obter_lista_projetos():
+    """Obtém a lista de nomes de projetos do banco de dados."""
+    conn = conectar_banco()
+    cursor = conn.cursor()
+    cursor.execute("SELECT nome FROM Projetos")
+    projetos = [row[0] for row in cursor.fetchall()]
+    conn.close()
+    return projetos
+
+def obter_componentes_por_projeto(projeto):
+    """Obtém a lista de componentes para um projeto específico."""
+    conn = conectar_banco()
+    cursor = conn.cursor()
+
+    # Buscar o ID do projeto
+    cursor.execute("SELECT id FROM Projetos WHERE nome = ?", (projeto,))
+    projeto_id = cursor.fetchone()
+    
+    if not projeto_id:
+        conn.close()
+        return []
+
+    projeto_id = projeto_id[0]
+    
+    # Buscar componentes para o projeto
+    cursor.execute("""
+        SELECT codigo, nome, quantidade_por_placa, quantidade_disponivel 
+        FROM Componentes 
+        WHERE id_projeto = ?
+    """, (projeto_id,))
+    
+    componentes = cursor.fetchall()
+    conn.close()
+    
+    # Formatar os resultados
+    return [{"codigo": row[0], "nome": row[1], "quantidade_por_placa": row[2], "quantidade_disponivel": row[3]} for row in componentes]
+
+def abrir_aba_listar_componentes(projeto_list):
     janela_listar = tk.Toplevel()
     janela_listar.title("Listar Componentes")
     janela_listar.geometry("850x500")
@@ -54,8 +96,10 @@ def abrir_aba_listar_componentes(projeto_list, componente_dict):
     def atualizar_tabela():
         tabela.delete(*tabela.get_children())
         projeto = projeto_selecionado.get()
-        if projeto in componente_dict:
-            for componente in componente_dict[projeto]:
+        componentes = obter_componentes_por_projeto(projeto)
+        
+        if componentes:
+            for componente in componentes:
                 tabela.insert("", "end", values=(
                     componente["codigo"],
                     componente["nome"],
@@ -76,3 +120,8 @@ def abrir_aba_listar_componentes(projeto_list, componente_dict):
     tk.Button(frame_botoes, text="Cancelar", command=janela_listar.destroy).pack(side="left", padx=10)
 
     janela_listar.mainloop()
+
+# Função que abre a aba de listar componentes
+def abrir_listar_componentes():
+    projetos = obter_lista_projetos()  # Obtém a lista de projetos
+    abrir_aba_listar_componentes(projetos)

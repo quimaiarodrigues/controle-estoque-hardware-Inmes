@@ -1,19 +1,39 @@
 import tkinter as tk
 from tkinter import PhotoImage
+import sqlite3
 
-def pesquisar_componente(codigo_componente, projeto, componentes_dict, label_nome_componente, label_quantidade, label_quantidade_por_projeto):
-    componentes = componentes_dict.get(projeto, [])
-    for comp in componentes:
-        if comp["codigo"] == codigo_componente:
-            label_nome_componente.config(text=f"Nome do Componente: {comp['nome']}")
-            label_quantidade.config(text=f"Quantidade em Estoque: {comp['quantidade_disponivel']}")
-            label_quantidade_por_projeto.config(text=f"Quantidade por Projeto: {comp['quantidade_por_placa']}")
-            return
-    label_nome_componente.config(text="Componente não encontrado.")
-    label_quantidade.config(text="")
-    label_quantidade_por_projeto.config(text="")
+# Função para conectar ao banco de dados
+def conectar_banco():
+    conn = sqlite3.connect('estoque.db')
+    return conn
 
-def adicionar_estoque(projeto, codigo_componente, quantidade, componentes_dict):
+def pesquisar_componente(codigo_componente, projeto, label_nome_componente, label_quantidade, label_quantidade_por_projeto):
+    conn = conectar_banco()
+    cursor = conn.cursor()
+
+    # Consultar o componente com base no código e no nome do projeto
+    query = """
+    SELECT c.nome, c.quantidade_disponivel, c.quantidade_por_placa 
+    FROM Componentes c 
+    JOIN Projetos p ON c.id_projeto = p.id 
+    WHERE c.codigo = ? AND p.nome = ?
+    """
+    cursor.execute(query, (codigo_componente, projeto))
+    componente = cursor.fetchone()
+
+    if componente:
+        label_nome_componente.config(text=f"Nome do Componente: {componente[0]}")
+        label_quantidade.config(text=f"Quantidade em Estoque: {componente[1]}")
+        label_quantidade_por_projeto.config(text=f"Quantidade por Projeto: {componente[2]}")
+    else:
+        label_nome_componente.config(text="Componente não encontrado.")
+        label_quantidade.config(text="")
+        label_quantidade_por_projeto.config(text="")
+
+    conn.close()
+
+
+def adicionar_estoque(projeto, codigo_componente, quantidade):
     if projeto and codigo_componente and quantidade:
         try:
             quantidade = int(quantidade)
@@ -21,16 +41,38 @@ def adicionar_estoque(projeto, codigo_componente, quantidade, componentes_dict):
             print("A quantidade deve ser um número inteiro.")
             return
 
-        for comp in componentes_dict.get(projeto, []):
-            if comp["codigo"] == codigo_componente:
-                comp["quantidade_disponivel"] += quantidade
-                print(f"Adicionado {quantidade} unidades de {codigo_componente} ao projeto '{projeto}'.")
-                return
-        print("Componente não encontrado no projeto.")
+        conn = conectar_banco()
+        cursor = conn.cursor()
+
+        # Atualizar a quantidade disponível do componente
+        query = """
+        UPDATE Componentes 
+        SET quantidade_disponivel = quantidade_disponivel + ?
+        WHERE codigo = ? AND id_projeto = (SELECT id FROM Projetos WHERE nome = ?)
+        """
+        cursor.execute(query, (quantidade, codigo_componente, projeto))
+        if cursor.rowcount > 0:
+            print(f"Adicionado {quantidade} unidades de {codigo_componente} ao projeto '{projeto}'.")
+        else:
+            print("Componente não encontrado no projeto.")
+
+        conn.commit()
+        conn.close()
     else:
         print("Preencha todos os campos.")
 
-def abrir_janela(projeto_list, componentes_dict):
+
+# Função para abrir a janela de adicionar estoque
+def abrir_janela():
+    conn = conectar_banco()
+    cursor = conn.cursor()
+
+    # Obter a lista de projetos do banco de dados
+    cursor.execute("SELECT nome FROM Projetos")
+    projeto_list = [row[0] for row in cursor.fetchall()]
+
+    conn.close()
+
     janela = tk.Toplevel()
     janela.title("Adicionar Estoque")
     janela.geometry("600x460")
@@ -81,7 +123,6 @@ def abrir_janela(projeto_list, componentes_dict):
     tk.Button(button_frame, text="Pesquisar", command=lambda: pesquisar_componente(
         entry_codigo_componente.get(),
         projeto_selecionado.get(),
-        componentes_dict,
         label_nome_componente,
         label_quantidade,
         label_quantidade_por_projeto)).grid(row=0, column=0, padx=5)
@@ -89,8 +130,7 @@ def abrir_janela(projeto_list, componentes_dict):
     tk.Button(button_frame, text="Adicionar", command=lambda: adicionar_estoque(
         projeto_selecionado.get(),
         entry_codigo_componente.get(),
-        entry_quantidade.get(),
-        componentes_dict)).grid(row=0, column=1, padx=5)
+        entry_quantidade.get())).grid(row=0, column=1, padx=5)
 
     tk.Button(button_frame, text="Cancelar", command=janela.destroy).grid(row=0, column=2, padx=5)
 
