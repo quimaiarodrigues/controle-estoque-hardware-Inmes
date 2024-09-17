@@ -1,10 +1,20 @@
 import tkinter as tk
 from tkinter import PhotoImage
 import sqlite3
+import os
+import sys
+
+# Função para obter o caminho correto do banco de dados
+def get_banco_dados_path():
+    if getattr(sys, 'frozen', False):  # Se estiver rodando como um executável
+        base_path = sys._MEIPASS  # Diretório temporário usado pelo PyInstaller
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, 'estoque.db')
 
 # Função para conectar ao banco de dados
 def conectar_banco():
-    conn = sqlite3.connect('estoque.db')
+    conn = sqlite3.connect(get_banco_dados_path())
     return conn
 
 def pesquisar_componente(codigo_componente, projeto, label_nome_componente, label_quantidade, label_quantidade_por_projeto):
@@ -32,13 +42,17 @@ def pesquisar_componente(codigo_componente, projeto, label_nome_componente, labe
 
     conn.close()
 
+def ocultar_status(label_status):
+    label_status.config(text="")
 
-def adicionar_estoque(projeto, codigo_componente, quantidade):
+def adicionar_estoque(projeto, codigo_componente, quantidade, label_status):
     if projeto and codigo_componente and quantidade:
         try:
             quantidade = int(quantidade)
         except ValueError:
-            print("A quantidade deve ser um número inteiro.")
+            label_status.config(text="A quantidade deve ser um número inteiro.", fg="red")
+            # Ocultar o status após 3 segundos (3000 milissegundos)
+            label_status.after(3000, lambda: ocultar_status(label_status))
             return
 
         conn = conectar_banco()
@@ -47,20 +61,22 @@ def adicionar_estoque(projeto, codigo_componente, quantidade):
         # Atualizar a quantidade disponível do componente
         query = """
         UPDATE Componentes 
-        SET quantidade_disponivel = quantidade_disponivel + ?
+        SET quantidade_disponivel = quantidade_disponivel + ? 
         WHERE codigo = ? AND id_projeto = (SELECT id FROM Projetos WHERE nome = ?)
         """
         cursor.execute(query, (quantidade, codigo_componente, projeto))
         if cursor.rowcount > 0:
-            print(f"Adicionado {quantidade} unidades de {codigo_componente} ao projeto '{projeto}'.")
+            label_status.config(text="Componente Adicionado", fg="green")
         else:
-            print("Componente não encontrado no projeto.")
+            label_status.config(text="Componente não encontrado no projeto.", fg="red")
 
         conn.commit()
         conn.close()
     else:
-        print("Preencha todos os campos.")
+        label_status.config(text="Preencha todos os campos.", fg="red")
 
+    # Ocultar o status após 3 segundos (3000 milissegundos)
+    label_status.after(3000, lambda: ocultar_status(label_status))
 
 # Função para abrir a janela de adicionar estoque
 def abrir_janela():
@@ -75,11 +91,12 @@ def abrir_janela():
 
     janela = tk.Toplevel()
     janela.title("Adicionar Estoque")
-    janela.geometry("600x460")
+    janela.geometry("800x500")
 
     # Adicionando logo
     try:
-        logo = tk.PhotoImage(file="logo.png")
+        logo_path = os.path.join(get_banco_dados_path().replace('estoque.db', ''), 'logo.png')
+        logo = tk.PhotoImage(file=logo_path)
         logo = logo.subsample(4, 4)
         tk.Label(janela, image=logo).pack(pady=10)
         janela.logo = logo
@@ -108,7 +125,6 @@ def abrir_janela():
     label_quantidade = tk.Label(janela, text="Quantidade em Estoque:")
     label_quantidade.pack(anchor="w", padx=10, pady=5)
 
-    # Novo campo: Quantidade por Projeto
     label_quantidade_por_projeto = tk.Label(janela, text="Quantidade por Projeto:")
     label_quantidade_por_projeto.pack(anchor="w", padx=10, pady=5)
 
@@ -116,7 +132,7 @@ def abrir_janela():
     entry_quantidade = tk.Entry(janela)
     entry_quantidade.pack(fill="x", padx=10, pady=5)
 
-    # Botões para pesquisar, adicionar estoque e cancelar
+    # Frame dos botões
     button_frame = tk.Frame(janela)
     button_frame.pack(pady=10)
 
@@ -130,8 +146,13 @@ def abrir_janela():
     tk.Button(button_frame, text="Adicionar", command=lambda: adicionar_estoque(
         projeto_selecionado.get(),
         entry_codigo_componente.get(),
-        entry_quantidade.get())).grid(row=0, column=1, padx=5)
+        entry_quantidade.get(),
+        label_status)).grid(row=0, column=1, padx=5)
 
     tk.Button(button_frame, text="Cancelar", command=janela.destroy).grid(row=0, column=2, padx=5)
+
+    # Label de status
+    label_status = tk.Label(janela, text="", fg="green")
+    label_status.pack(pady=10)
 
     janela.mainloop()

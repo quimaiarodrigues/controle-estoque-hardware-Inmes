@@ -1,10 +1,12 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
+import os
 
 def conectar_banco():
     """Conecta ao banco de dados SQLite e retorna a conexão."""
-    return sqlite3.connect('estoque.db')
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'estoque.db')
+    return sqlite3.connect(db_path)
 
 def obter_lista_projetos():
     """Obtém a lista de nomes de projetos do banco de dados."""
@@ -46,7 +48,7 @@ def obter_componentes_por_projeto(projeto):
 def abrir_aba_listar_componentes(projeto_list):
     janela_listar = tk.Toplevel()
     janela_listar.title("Listar Componentes")
-    janela_listar.geometry("850x500")
+    janela_listar.geometry("800x550")
 
     # Adicionando logo
     try:
@@ -121,7 +123,6 @@ def abrir_aba_listar_componentes(projeto_list):
 
     janela_listar.mainloop()
 
-# Função que abre a aba de listar componentes
 def abrir_listar_componentes():
     projetos = obter_lista_projetos()  # Obtém a lista de projetos
     abrir_aba_listar_componentes(projetos)

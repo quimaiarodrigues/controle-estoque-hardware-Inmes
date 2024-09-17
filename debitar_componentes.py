@@ -1,39 +1,56 @@
+import os
 import tkinter as tk
 from tkinter import messagebox
 import sqlite3
 
+# Obtenha o caminho absoluto do diretório atual
+basedir = os.path.dirname(os.path.abspath(__file__))
+
+def conectar_banco():
+    try:
+        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
+        conn = sqlite3.connect(os.path.join(basedir, 'estoque.db'))
+        return conn
+    except sqlite3.Error as e:
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
+        return None
+
 def debitar_componentes():
     def obter_projetos():
-        try:
-            conn = sqlite3.connect('estoque.db')
-            cursor = conn.cursor()
-            cursor.execute("SELECT nome FROM projetos")
-            projetos = [row[0] for row in cursor.fetchall()]
-            conn.close()
+        conn = conectar_banco()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT nome FROM Projetos")  # Corrigido o nome da tabela para 'Projetos'
+                projetos = [row[0] for row in cursor.fetchall()]
+            except sqlite3.Error as e:
+                messagebox.showerror("Erro", f"Erro ao acessar o banco de dados: {e}")
+                projetos = []
+            finally:
+                conn.close()
             return projetos
-        except sqlite3.Error as e:
-            messagebox.showerror("Erro", f"Erro ao acessar o banco de dados: {e}")
-            return []
 
     def obter_componentes(projeto):
-        try:
-            conn = sqlite3.connect('estoque.db')
-            cursor = conn.cursor()
-            cursor.execute("""
-                SELECT c.nome, c.quantidade_disponivel, c.quantidade_por_placa
-                FROM componentes c
-                JOIN projetos p ON c.id_projeto = p.id
-                WHERE p.nome = ?
-            """, (projeto,))
-            componentes = [
-                {"nome": row[0], "quantidade_disponivel": row[1], "quantidade_por_placa": row[2]}
-                for row in cursor.fetchall()
-            ]
-            conn.close()
+        conn = conectar_banco()
+        if conn:
+            try:
+                cursor = conn.cursor()
+                cursor.execute(""" 
+                    SELECT c.nome, c.quantidade_disponivel, c.quantidade_por_placa
+                    FROM Componentes c
+                    JOIN Projetos p ON c.id_projeto = p.id
+                    WHERE p.nome = ?
+                """, (projeto,))
+                componentes = [
+                    {"nome": row[0], "quantidade_disponivel": row[1], "quantidade_por_placa": row[2]}
+                    for row in cursor.fetchall()
+                ]
+            except sqlite3.Error as e:
+                messagebox.showerror("Erro", f"Erro ao acessar o banco de dados: {e}")
+                componentes = []
+            finally:
+                conn.close()
             return componentes
-        except sqlite3.Error as e:
-            messagebox.showerror("Erro", f"Erro ao acessar o banco de dados: {e}")
-            return []
 
     def debitar():
         projeto_selecionado = projeto_selecionado_var.get()
@@ -42,25 +59,27 @@ def debitar_componentes():
             if confirmar:
                 componentes = obter_componentes(projeto_selecionado)
                 if componentes:
-                    try:
-                        conn = sqlite3.connect('estoque.db')
-                        cursor = conn.cursor()
-                        for comp in componentes:
-                            nova_quantidade = comp["quantidade_disponivel"] - comp["quantidade_por_placa"]
-                            nova_quantidade = max(nova_quantidade, 0)
-                            cursor.execute("""
-                                UPDATE componentes
-                                SET quantidade_disponivel = ?
-                                WHERE nome = ?
-                            """, (nova_quantidade, comp["nome"]))
-                        conn.commit()
-                        conn.close()
-                        messagebox.showinfo("Info", "Componentes debitados com sucesso!")
-                    except sqlite3.Error as e:
-                        messagebox.showerror("Erro", f"Erro ao atualizar o banco de dados: {e}")
+                    conn = conectar_banco()
+                    if conn:
+                        try:
+                            cursor = conn.cursor()
+                            for comp in componentes:
+                                nova_quantidade = comp["quantidade_disponivel"] - comp["quantidade_por_placa"]
+                                nova_quantidade = max(nova_quantidade, 0)
+                                cursor.execute("""
+                                    UPDATE Componentes
+                                    SET quantidade_disponivel = ?
+                                    WHERE nome = ?
+                                """, (nova_quantidade, comp["nome"]))
+                            conn.commit()
+                            messagebox.showinfo("Info", "Componentes debitados com sucesso!")
+                        except sqlite3.Error as e:
+                            messagebox.showerror("Erro", f"Erro ao atualizar o banco de dados: {e}")
+                        finally:
+                            conn.close()
+                    janela_debito.destroy()
                 else:
                     messagebox.showwarning("Aviso", "Nenhum componente encontrado para o projeto selecionado.")
-                janela_debito.destroy()
             else:
                 janela_debito.destroy()
         else:

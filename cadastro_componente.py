@@ -1,11 +1,21 @@
 import tkinter as tk
 from tkinter import messagebox
 import sqlite3
+import os
+import sys
 
 # Função para conectar ao banco de dados
 def conectar_banco():
-    conn = sqlite3.connect('estoque.db')
+    db_path = get_banco_dados_path()
+    conn = sqlite3.connect(db_path)
     return conn
+
+def get_banco_dados_path():
+    if getattr(sys, 'frozen', False):  # Se estiver rodando como um executável
+        base_path = sys._MEIPASS  # Diretório temporário usado pelo PyInstaller
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, 'estoque.db')
 
 def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, label_status):
     if projeto and nome_componente and codigo_componente and quantidade_por_placa and quantidade_disponivel:
@@ -20,7 +30,7 @@ def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_po
         cursor = conn.cursor()
 
         # Verificar se o código do componente já existe para o projeto
-        cursor.execute("""
+        cursor.execute(""" 
             SELECT c.codigo 
             FROM Componentes c 
             JOIN Projetos p ON c.id_projeto = p.id 
@@ -31,7 +41,7 @@ def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_po
             messagebox.showwarning("Aviso", "Código de componente já existente para este projeto.")
         else:
             # Inserir novo componente
-            cursor.execute("""
+            cursor.execute(""" 
                 INSERT INTO Componentes (nome, codigo, quantidade_por_placa, quantidade_disponivel, id_projeto) 
                 VALUES (?, ?, ?, ?, (SELECT id FROM Projetos WHERE nome = ?))
             """, (nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, projeto))
@@ -44,7 +54,6 @@ def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_po
     else:
         label_status.config(text="Preencha todos os campos.", fg="red")
         label_status.after(3000, lambda: label_status.config(text=""))
-
 
 # Função para atualizar a lista de projetos no menu de seleção
 def atualizar_projetos(menu_projeto, projeto_selecionado):
@@ -60,20 +69,30 @@ def atualizar_projetos(menu_projeto, projeto_selecionado):
     for projeto in projeto_list:
         menu_projeto["menu"].add_command(label=projeto, command=tk._setit(projeto_selecionado, projeto))
 
+# Função para obter o caminho da logo
+def get_logo_path():
+    if getattr(sys, 'frozen', False):  # Se estiver rodando como um executável
+        base_path = sys._MEIPASS  # Diretório temporário usado pelo PyInstaller
+    else:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, 'imagens', 'logo.png')
+
 # Função para abrir a janela de cadastro de componentes
 def abrir_janela():
     janela = tk.Toplevel()
     janela.title("Cadastrar Componente")
-    janela.geometry("600x525")
+    janela.geometry("800x525")
 
-    # Adicionando logo
+      # Adicionando logo
     try:
-        logo = tk.PhotoImage(file="logo.png")
+        # Ajuste do caminho da logo para a janela Toplevel
+        logo_path = os.path.join(get_banco_dados_path().replace('estoque.db', ''), 'logo.png')
+        logo = tk.PhotoImage(file=logo_path)
         logo = logo.subsample(4, 4)
         tk.Label(janela, image=logo).pack(pady=10)
         janela.logo = logo
     except tk.TclError:
-        print("Erro ao carregar a imagem do logotipo para o cadastro de componente.")
+        print("Erro ao carregar a imagem da logo para adicionar estoque.")
 
     # Adicionando texto abaixo do logo
     texto = "Cadastro de Componente"
