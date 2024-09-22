@@ -17,6 +17,7 @@ def get_banco_dados_path():
         base_path = os.path.abspath(".")
     return os.path.join(base_path, 'estoque.db')
 
+# Função para salvar o componente no banco de dados
 def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, label_status):
     if projeto and nome_componente and codigo_componente and quantidade_por_placa and quantidade_disponivel:
         try:
@@ -83,9 +84,8 @@ def abrir_janela():
     janela.title("Cadastrar Componente")
     janela.geometry("800x525")
 
-      # Adicionando logo
+    # Adicionando logo
     try:
-        # Ajuste do caminho da logo para a janela Toplevel
         logo_path = os.path.join(get_banco_dados_path().replace('estoque.db', ''), 'logo.png')
         logo = tk.PhotoImage(file=logo_path)
         logo = logo.subsample(4, 4)

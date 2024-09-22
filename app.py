@@ -1,6 +1,7 @@
-import tkinter as tk
-from tkinter import PhotoImage
 import os
+import tkinter as tk
+from tkinter import PhotoImage, messagebox
+import sqlite3
 import sys
 
 # Função para obter o caminho correto do banco de dados e outros arquivos
@@ -11,6 +12,49 @@ def get_file_path(filename):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, filename)
 
+def conectar_banco():
+    try:
+        conn = sqlite3.connect(get_file_path('estoque.db'))
+        return conn
+    except sqlite3.Error as e:
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
+        return None
+
+def verificar_estoque_minimo():
+    conn = conectar_banco()
+    if conn:
+        with conn:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT p.nome, SUM(c.quantidade_disponivel), p.limite_minimo
+                FROM Projetos p
+                JOIN Componentes c ON p.id = c.id_projeto
+                GROUP BY p.id
+            """)
+            projetos = cursor.fetchall()
+
+            projetos_com_estoque_baixo = [
+                p[0] for p in projetos if p[1] is not None and p[1] <= p[2]
+            ]
+
+            if projetos_com_estoque_baixo:
+                projetos = ', '.join(projetos_com_estoque_baixo)
+                mensagem = f"AVISO: Estoque insuficiente para os projetos: {projetos}"
+            else:
+                # Verifica se existe algum projeto cadastrado
+                if projetos:
+                    mensagem = ""  # Não exibe mensagem se há projetos cadastrados
+                else:
+                    mensagem = "Nenhum projeto cadastrado."  # Exibe mensagem se não houver projetos
+
+            # Atualiza o label de status com a mensagem
+            status_label.config(text=mensagem)
+    
+    # Reexecutar a função após 1 segundo
+    root.after(10000, verificar_estoque_minimo)
+
+
+# Função para abrir diferentes janelas
 def abrir_cadastro_projeto():
     import cadastro_projeto
     cadastro_projeto.abrir_janela_cadastro_projeto()
@@ -39,7 +83,7 @@ def abrir_debitar_componentes():
 # Criação da janela principal
 root = tk.Tk()
 root.title("Controle de Estoque")
-root.geometry("800x500")
+root.geometry("810x500")
 
 # Adicionando logo
 try:
@@ -74,13 +118,19 @@ button_deletar_componente.grid(row=4, column=0, padx=10, pady=10, sticky="nsew")
 button_debitar_componentes = tk.Button(root, text="Debitar Componentes", width=20, command=abrir_debitar_componentes)
 button_debitar_componentes.grid(row=4, column=1, padx=10, pady=10, sticky="nsew")
 
-## Remover espaço extra da linha do rodapé
+# Adicionando um label para mostrar o status de estoque
+status_label = tk.Label(root, text="Verificando estoque...", font=("Arial", 12), fg="red")
+status_label.grid(row=5, column=0, columnspan=2, pady=10)
+
+# Chama a função para verificar o estoque mínimo inicialmente
+verificar_estoque_minimo()
+
+# Remover espaço extra da linha do rodapé
 rodape_texto = "Developed by: Icaro Quimaia Rodrigues"
 rodape_label = tk.Label(root, text=rodape_texto, font=("Arial", 8), anchor='e')
-rodape_label.grid(row=5, column=1, padx=10, pady=0, sticky="se")
+rodape_label.grid(row=6, column=1, padx=10, pady=0, sticky="se")
 
-# Ajuste as linhas para expandirem corretamente
-root.grid_rowconfigure(5, weight=1)  # Deixar o rodapé na última linha
+root.grid_rowconfigure(6, weight=1)  # Deixar o rodapé na última linha
 
 # Ajustar as colunas e linhas para expandirem com a janela
 root.grid_columnconfigure(0, weight=1)
@@ -91,8 +141,5 @@ root.grid_rowconfigure(4, weight=1)
 root.grid_rowconfigure(5, weight=1)
 root.grid_rowconfigure(6, weight=1)
 
-# Imprimir o caminho do banco de dados
-print("Caminho do banco de dados:", get_file_path("estoque.db"))
-
-# Executando a aplicação
+# Inicia a interface principal
 root.mainloop()

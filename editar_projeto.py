@@ -83,13 +83,13 @@ def abrir_janela_editar_projeto(projeto_list, componente_dict):
     editar_janela.mainloop()
 
 # Exemplo de uso (simulação)
-projeto_list = ["Projeto 1", "Projeto 2", "Projeto 3"]
-componente_dict = {
-    "Projeto 1": [],
-    "Projeto 2": [],
-    "Projeto 3": []
-}
+#projeto_list = ["Projeto 1", "Projeto 2", "Projeto 3"]
+#componente_dict = {
+ #   "Projeto 1": [],
+  #  "Projeto 2": [],
+   # "Projeto 3": []
+#}
 
 root = tk.Tk()
 root.withdraw()  # Esconde a janela principal
-abrir_janela_editar_projeto(projeto_list, componente_dict)
+#abrir_janela_editar_projeto(projeto_list, componente_dict)
