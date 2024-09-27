@@ -4,8 +4,25 @@ from tkinter import PhotoImage, messagebox
 import sqlite3
 import sys
 
+
 # Obtenha o caminho absoluto do diretório atual
-basedir = os.path.dirname(os.path.abspath(__file__))
+basedir = os.path.dirname(os.path.abspath(__file__)) 
+
+
+# Definir o caminho do banco de dados com base no ambiente
+if os.environ.get("ENVIRONMENT") == "production":
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
+else:
+    caminho_banco = os.path.join(basedir, 'estoque.db')
+
+def centralizar_janela(janela, largura, altura):
+    # Calcula a posição x e y para centralizar a janela
+    largura_tela = janela.winfo_screenwidth()
+    altura_tela = janela.winfo_screenheight()
+    x = (largura_tela // 2) - (largura // 2)
+    y = (altura_tela // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
+
 
 def verificar_estoque_minimo(projeto_id):
     conn = conectar_banco()
@@ -35,7 +52,7 @@ def get_file_path(filename):
 
 def conectar_banco():
     try:
-        conn = sqlite3.connect(get_file_path('estoque.db'))
+        conn = sqlite3.connect(caminho_banco)  
         return conn
     except sqlite3.Error as e:
         messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
@@ -136,6 +153,8 @@ def debitar_componentes():
     janela.title("Debitar Componentes")
     janela.geometry("430x260")  # Ajuste o tamanho da janela 
 
+    centralizar_janela(janela, 430, 260)
+
     # Adicionando logo
     try:
         logo_path = os.path.join(basedir, "logo.png")
@@ -148,7 +167,7 @@ def debitar_componentes():
         print("Erro ao carregar a imagem do logotipo para a janela de cadastro de projeto.")
 
     # Adicionando seleção de projetos e botão
-    tk.Label(janela, text="Selecione um Projeto", font=('Arial', 12, 'bold')).grid(row=1, column=0, columnspan=2, pady=10)
+    tk.Label(janela, text="SELECIONE UM PROJETO", font=('Arial', 12, 'bold')).grid(row=1, column=0, columnspan=2, pady=10)
     
     projeto_selecionado_var = tk.StringVar(janela)
     projetos = obter_projetos()

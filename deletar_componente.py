@@ -4,16 +4,29 @@ from tkinter import ttk, messagebox
 import sqlite3
 
 # Obtenha o caminho absoluto do diretório atual
-basedir = os.path.dirname(os.path.abspath(__file__))
+basedir = os.path.dirname(os.path.abspath(__file__)) #PARA ERVIDOR COMENTAR 
+
+# Definir o caminho do banco de dados com base no ambiente
+if os.environ.get("ENVIRONMENT") == "production":
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
+else:
+    caminho_banco = os.path.join(basedir, 'estoque.db')
 
 def conectar_banco():
     try:
-        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
-        conn = sqlite3.connect(os.path.join(basedir, 'estoque.db'))
+        conn = sqlite3.connect(caminho_banco) 
         return conn
     except sqlite3.Error as e:
         messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
         return None
+
+def centralizar_janela(janela, largura, altura):
+    # Calcula a posição x e y para centralizar a janela
+    largura_tela = janela.winfo_screenwidth()
+    altura_tela = janela.winfo_screenheight()
+    x = (largura_tela // 2) - (largura // 2)
+    y = (altura_tela // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
 def abrir_janela():
     def obter_projetos():
@@ -76,65 +89,6 @@ def abrir_janela():
             else:
                 tk.Label(janela_deletar, text=f"Nenhum componente encontrado para o projeto '{projeto}'.").pack(pady=10)
 
-    def adicionar_componente():
-        projeto = projeto_selecionado.get()
-        if projeto:
-            adicionar_janela = tk.Toplevel()
-            adicionar_janela.title("Adicionar Componente")
-            adicionar_janela.geometry("400x250")
-
-            tk.Label(adicionar_janela, text="Código do Componente:").pack(anchor="w", padx=10, pady=5)
-            codigo_entry = tk.Entry(adicionar_janela)
-            codigo_entry.pack(fill="x", padx=10, pady=5)
-
-            tk.Label(adicionar_janela, text="Nome do Componente:").pack(anchor="w", padx=10, pady=5)
-            nome_entry = tk.Entry(adicionar_janela)
-            nome_entry.pack(fill="x", padx=10, pady=5)
-
-            tk.Label(adicionar_janela, text="Quantidade por Placa:").pack(anchor="w", padx=10, pady=5)
-            quantidade_por_placa_entry = tk.Entry(adicionar_janela)
-            quantidade_por_placa_entry.pack(fill="x", padx=10, pady=5)
-
-            tk.Label(adicionar_janela, text="Quantidade Disponível:").pack(anchor="w", padx=10, pady=5)
-            quantidade_disponivel_entry = tk.Entry(adicionar_janela)
-            quantidade_disponivel_entry.pack(fill="x", padx=10, pady=5)
-
-            def salvar_componente():
-                codigo = codigo_entry.get().strip()
-                nome = nome_entry.get().strip()
-                try:
-                    quantidade_por_placa = int(quantidade_por_placa_entry.get().strip())
-                    quantidade_disponivel = int(quantidade_disponivel_entry.get().strip())
-                except ValueError:
-                    messagebox.showwarning("Aviso", "Quantidade deve ser um número inteiro.")
-                    return
-                
-                if codigo and nome:
-                    conn = conectar_banco()
-                    if conn:
-                        try:
-                            cursor = conn.cursor()
-                            cursor.execute("SELECT id FROM Projetos WHERE nome = ?", (projeto,))
-                            projeto_id = cursor.fetchone()[0]
-                            
-                            cursor.execute("""
-                                INSERT INTO Componentes (codigo, nome, quantidade_por_placa, quantidade_disponivel, id_projeto)
-                                VALUES (?, ?, ?, ?, ?)
-                            """, (codigo, nome, quantidade_por_placa, quantidade_disponivel, projeto_id))
-                            conn.commit()
-                            adicionar_janela.destroy()
-                            atualizar_tabela()
-                            messagebox.showinfo("Info", "Componente adicionado com sucesso!")
-                        except sqlite3.Error as e:
-                            messagebox.showerror("Erro", f"Erro ao atualizar o banco de dados: {e}")
-                        finally:
-                            conn.close()
-                else:
-                    messagebox.showwarning("Aviso", "Código e nome do componente não podem estar vazios.")
-
-            tk.Button(adicionar_janela, text="Salvar", command=salvar_componente).pack(pady=10)
-            tk.Button(adicionar_janela, text="Cancelar", command=adicionar_janela.destroy).pack(pady=10)
-
     def deletar_componente():
         projeto = projeto_selecionado.get()
         selecionado = tabela.selection()
@@ -162,7 +116,13 @@ def abrir_janela():
 
     janela_deletar = tk.Toplevel()
     janela_deletar.title("Gerenciar Componentes")
-    janela_deletar.geometry("800x500")
+    janela_deletar.geometry("850x500")
+    centralizar_janela(janela_deletar, 850, 500)
+
+    # Faz com que a janela de deletar fique sempre na frente da janela principal
+    janela_deletar.transient()  # A janela se torna temporária e fica na frente
+    janela_deletar.focus_force()  # Traz a janela para o foco imediatamente
+    janela_deletar.grab_set()  # Faz com que a janela principal não receba eventos enquanto essa estiver aberta
 
     # Adicionando logo
     try:
@@ -174,7 +134,7 @@ def abrir_janela():
         print("Erro ao carregar a imagem da logo para gerenciar componentes.")
 
     # Adicionando texto abaixo da logo
-    texto = "Gerenciar Componentes"
+    texto = "GERENCIAR COMPONENTES"
     tk.Label(janela_deletar, text=texto, font=("Arial", 16)).pack(pady=10)
 
     # Adicionando seleção de projeto
@@ -198,17 +158,22 @@ def abrir_janela():
     tabela = ttk.Treeview(frame_tabela, columns=colunas, show="headings", yscrollcommand=scrollbar.set)
     scrollbar.config(command=tabela.yview)
 
-    # Definindo cabeçalhos da tabela
+    # Definindo cabeçalhos e alinhamento das colunas da tabela
     for coluna in colunas:
-        tabela.heading(coluna, text=coluna, anchor=tk.CENTER)
+        tabela.heading(coluna, text=coluna, anchor=tk.CENTER)  # Cabeçalhos centralizados
+
+    # Definindo alinhamento central para os valores das colunas
+    tabela.column("Código", anchor=tk.CENTER, width=100)
+    tabela.column("Nome", anchor=tk.CENTER, width=200)
+    tabela.column("Quantidade por Placa", anchor=tk.CENTER, width=150)
+    tabela.column("Quantidade Disponível", anchor=tk.CENTER, width=150)
 
     tabela.pack(fill="both", expand=True)
 
-    # Botões para atualizar, adicionar, deletar e cancelar
+    # Botões para adicionar, deletar e cancelar
     frame_botoes = tk.Frame(janela_deletar)
     frame_botoes.pack(pady=10)
 
-    #tk.Button(frame_botoes, text="Atualizar", command=atualizar_tabela).pack(side=tk.LEFT, padx=5)
     tk.Button(frame_botoes, text="Deletar Componente", command=deletar_componente).pack(side=tk.LEFT, padx=5)
     tk.Button(frame_botoes, text="Cancelar", command=janela_deletar.destroy).pack(side=tk.LEFT, padx=5)
 

@@ -3,13 +3,32 @@ from tkinter import messagebox
 import sqlite3
 import os
 
+
+#caminho_banco = "C:\Users\ICARO\Desktop\Documentos Inmes\estoque.db"
+
+
 # Obtenha o caminho absoluto do diretório atual
-basedir = os.path.dirname(os.path.abspath(__file__))
+basedir = os.path.dirname(os.path.abspath(__file__))  #PARA ERVIDOR COMENTAR 
+
+# Definir o caminho do banco de dados com base no ambiente
+if os.environ.get("ENVIRONMENT") == "production":
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
+else:
+    caminho_banco = os.path.join(basedir, 'estoque.db')
+
+
+def centralizar_janela(janela, largura, altura):
+    # Calcula a posição x e y para centralizar a janela
+    largura_tela = janela.winfo_screenwidth()
+    altura_tela = janela.winfo_screenheight()
+    x = (largura_tela // 2) - (largura // 2)
+    y = (altura_tela // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
 def conectar_banco():
     try:
-        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
-        conn = sqlite3.connect(os.path.join(basedir, 'estoque.db'))
+         # conn = sqlite3.connect(caminho_banco) 
+        conn = sqlite3.connect(os.path.join(basedir, 'estoque.db'))  #PARA ERVIDOR COMENTAR 
         return conn
     except sqlite3.Error as e:
         messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
@@ -50,6 +69,7 @@ def abrir_janela_editar_projeto(projeto_list, componente_dict):
     editar_janela = tk.Toplevel()
     editar_janela.title("Editar Nome do Projeto")
     editar_janela.geometry("400x300")
+    centralizar_janela(editar_janela, 400, 300)
 
     tk.Label(editar_janela, text="Selecione o Projeto para Editar:").grid(row=0, column=0, sticky="w", padx=10, pady=5)
     lista_projetos = tk.Listbox(editar_janela)

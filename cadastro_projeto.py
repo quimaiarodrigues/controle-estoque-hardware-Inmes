@@ -4,17 +4,26 @@ from tkinter import messagebox
 from tkinter import ttk  # Import para Treeview
 import sqlite3
 
-# Obtenha o caminho absoluto do diretório atual
-basedir = os.path.dirname(os.path.abspath(__file__))
 
 def conectar_banco():
     try:
         # Use o caminho absoluto para garantir que o executável encontre o banco de dados
-        conn = sqlite3.connect(os.path.join(basedir, 'estoque.db'))
+        conn = sqlite3.connect(caminho_banco)
         return conn
     except sqlite3.Error as e:
         messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
         return None
+
+
+# Obtenha o caminho absoluto do diretório atual, PARA SERVIDOR COMENTAR 
+basedir = os.path.dirname(os.path.abspath(__file__))
+
+# Definir o caminho do banco de dados com base no ambiente
+if os.environ.get("ENVIRONMENT") == "production":
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
+else:
+    caminho_banco = os.path.join(basedir, 'estoque.db')
+    
 
 def criar_tabela_projetos():
     conn = conectar_banco()
@@ -25,6 +34,17 @@ def criar_tabela_projetos():
                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                                 nome TEXT NOT NULL UNIQUE,
                                 limite_minimo INTEGER DEFAULT 0)''')
+
+
+def centralizar_janela(janela, largura, altura):
+    # Calcula a posição x e y para centralizar a janela
+    largura_tela = janela.winfo_screenwidth()
+    altura_tela = janela.winfo_screenheight()
+    x = (largura_tela // 2) - (largura // 2)
+    y = (altura_tela // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
+
+
 
 def abrir_janela_cadastro_projeto():
     def salvar_projeto():
@@ -79,7 +99,10 @@ def abrir_janela_cadastro_projeto():
 
             editar_janela = tk.Toplevel()
             editar_janela.title("Editar Projeto")
-            editar_janela.geometry("400x250")
+            editar_janela.geometry("400x200")
+
+            # Centraliza a janela de edição
+            centralizar_janela(editar_janela, 400, 200)
 
             tk.Label(editar_janela, text="Nome do Projeto:").pack(anchor="w", padx=10, pady=5)
             nome_entry = tk.Entry(editar_janela)
@@ -140,6 +163,9 @@ def abrir_janela_cadastro_projeto():
     janela_projeto.title("Cadastrar Projeto")
     janela_projeto.geometry("800x600")
 
+    # Centraliza a janela na tela
+    centralizar_janela(janela_projeto, 800, 600)
+
     # Adicionando logo
     try:
         logo_path = os.path.join(basedir, "logo.png")
@@ -152,7 +178,7 @@ def abrir_janela_cadastro_projeto():
         print("Erro ao carregar a imagem do logotipo.")
 
     # Adicionando texto abaixo do logotipo
-    tk.Label(janela_projeto, text="Cadastro de Projetos", font=("Arial", 18)).grid(row=1, column=0, columnspan=2, pady=10)
+    tk.Label(janela_projeto, text="CADASTRO DE PROJETOS", font=("Arial", 18)).grid(row=1, column=0, columnspan=2, pady=10)
 
     tk.Label(janela_projeto, text="Nome do Projeto:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
     nome_entry = tk.Entry(janela_projeto)

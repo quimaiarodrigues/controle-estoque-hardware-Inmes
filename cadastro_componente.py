@@ -6,16 +6,31 @@ import sys
 
 # Função para conectar ao banco de dados
 def conectar_banco():
-    db_path = get_banco_dados_path()
-    conn = sqlite3.connect(db_path)
-    return conn
+    try:
+        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
+        conn = sqlite3.connect(caminho_banco)
+        return conn
+    except sqlite3.Error as e:
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
+        return None
 
-def get_banco_dados_path():
-    if getattr(sys, 'frozen', False):  # Se estiver rodando como um executável
-        base_path = sys._MEIPASS  # Diretório temporário usado pelo PyInstaller
-    else:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, 'estoque.db')
+
+# Obtenha o caminho absoluto do diretório atual
+basedir = os.path.dirname(os.path.abspath(__file__))
+
+# Definir o caminho do banco de dados com base no ambiente
+if os.environ.get("ENVIRONMENT") == "production":
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
+else:
+    caminho_banco = os.path.join(basedir, 'estoque.db')
+
+# Função para centralizar a janela
+def centralizar_janela(janela, largura, altura):
+    largura_tela = janela.winfo_screenwidth()
+    altura_tela = janela.winfo_screenheight()
+    x = (largura_tela // 2) - (largura // 2)
+    y = (altura_tela // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
 # Função para salvar o componente no banco de dados
 def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, label_status):
@@ -28,30 +43,31 @@ def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_po
             return
 
         conn = conectar_banco()
-        cursor = conn.cursor()
+        if conn:
+            cursor = conn.cursor()
 
-        # Verificar se o código do componente já existe para o projeto
-        cursor.execute(""" 
-            SELECT c.codigo 
-            FROM Componentes c 
-            JOIN Projetos p ON c.id_projeto = p.id 
-            WHERE c.codigo = ? AND p.nome = ?
-        """, (codigo_componente, projeto))
-
-        if cursor.fetchone():
-            messagebox.showwarning("Aviso", "Código de componente já existente para este projeto.")
-        else:
-            # Inserir novo componente
+            # Verificar se o código do componente já existe para o projeto
             cursor.execute(""" 
-                INSERT INTO Componentes (nome, codigo, quantidade_por_placa, quantidade_disponivel, id_projeto) 
-                VALUES (?, ?, ?, ?, (SELECT id FROM Projetos WHERE nome = ?))
-            """, (nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, projeto))
-            conn.commit()
+                SELECT c.codigo 
+                FROM Componentes c 
+                JOIN Projetos p ON c.id_projeto = p.id 
+                WHERE c.codigo = ? AND p.nome = ?
+            """, (codigo_componente, projeto))
 
-            label_status.config(text="Componente cadastrado com sucesso.", fg="green")
-            label_status.after(3000, lambda: label_status.config(text=""))
+            if cursor.fetchone():
+                messagebox.showwarning("Aviso", "Código de componente já existente para este projeto.")
+            else:
+                # Inserir novo componente
+                cursor.execute(""" 
+                    INSERT INTO Componentes (nome, codigo, quantidade_por_placa, quantidade_disponivel, id_projeto) 
+                    VALUES (?, ?, ?, ?, (SELECT id FROM Projetos WHERE nome = ?))
+                """, (nome_componente, codigo_componente, quantidade_por_placa, quantidade_disponivel, projeto))
+                conn.commit()
 
-        conn.close()
+                label_status.config(text="Componente cadastrado com sucesso.", fg="green")
+                label_status.after(3000, lambda: label_status.config(text=""))
+
+            conn.close()
     else:
         label_status.config(text="Preencha todos os campos.", fg="red")
         label_status.after(3000, lambda: label_status.config(text=""))
@@ -59,24 +75,15 @@ def salvar_componente(projeto, nome_componente, codigo_componente, quantidade_po
 # Função para atualizar a lista de projetos no menu de seleção
 def atualizar_projetos(menu_projeto, projeto_selecionado):
     conn = conectar_banco()
-    cursor = conn.cursor()
+    if conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT nome FROM Projetos")
+        projeto_list = [row[0] for row in cursor.fetchall()]
+        conn.close()
 
-    # Obter a lista de projetos do banco de dados
-    cursor.execute("SELECT nome FROM Projetos")
-    projeto_list = [row[0] for row in cursor.fetchall()]
-    conn.close()
-
-    menu_projeto["menu"].delete(0, "end")
-    for projeto in projeto_list:
-        menu_projeto["menu"].add_command(label=projeto, command=tk._setit(projeto_selecionado, projeto))
-
-# Função para obter o caminho da logo
-def get_logo_path():
-    if getattr(sys, 'frozen', False):  # Se estiver rodando como um executável
-        base_path = sys._MEIPASS  # Diretório temporário usado pelo PyInstaller
-    else:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, 'imagens', 'logo.png')
+        menu_projeto["menu"].delete(0, "end")
+        for projeto in projeto_list:
+            menu_projeto["menu"].add_command(label=projeto, command=tk._setit(projeto_selecionado, projeto))
 
 # Função para abrir a janela de cadastro de componentes
 def abrir_janela():
@@ -84,18 +91,21 @@ def abrir_janela():
     janela.title("Cadastrar Componente")
     janela.geometry("800x525")
 
+    # Centraliza a janela de edição
+    centralizar_janela(janela, 800, 525)
+
     # Adicionando logo
     try:
-        logo_path = os.path.join(get_banco_dados_path().replace('estoque.db', ''), 'logo.png')
+        logo_path = os.path.join(basedir,'logo.png')
         logo = tk.PhotoImage(file=logo_path)
         logo = logo.subsample(4, 4)
         tk.Label(janela, image=logo).pack(pady=10)
         janela.logo = logo
     except tk.TclError:
-        print("Erro ao carregar a imagem da logo para adicionar estoque.")
+        print("Erro ao carregar a imagem da logo.")
 
     # Adicionando texto abaixo do logo
-    texto = "Cadastro de Componente"
+    texto = "CADASTRO DE COMPONENTES"
     tk.Label(janela, text=texto, font=("Arial", 16)).pack(pady=10)
 
     # Adicionando seleção de projeto

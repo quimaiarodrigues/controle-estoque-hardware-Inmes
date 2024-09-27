@@ -1,24 +1,39 @@
-import tkinter as tk
-from tkinter import PhotoImage
-import sqlite3
 import os
-import sys
+import tkinter as tk
+from tkinter import PhotoImage, messagebox
+import sqlite3
 
-# Função para obter o caminho correto do banco de dados
-def get_banco_dados_path():
-    if getattr(sys, 'frozen', False):  # Se estiver rodando como um executável
-        base_path = sys._MEIPASS  # Diretório temporário usado pelo PyInstaller
-    else:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, 'estoque.db')
+# Obtenha o caminho absoluto do diretório atual
+basedir = os.path.dirname(os.path.abspath(__file__))
+
+# Definir o caminho do banco de dados com base no ambiente
+if os.environ.get("ENVIRONMENT") == "production":
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"  # Caminho absoluto em produção
+else:
+    caminho_banco = os.path.join(basedir, 'estoque.db')  # Caminho para ambiente de desenvolvimento
 
 # Função para conectar ao banco de dados
 def conectar_banco():
-    conn = sqlite3.connect(get_banco_dados_path())
-    return conn
+    try:
+        # Usa o caminho absoluto para garantir que o executável encontre o banco de dados
+        conn = sqlite3.connect(caminho_banco)
+        return conn
+    except sqlite3.Error as e:
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
+        return None
+
+def centralizar_janela(janela, largura, altura):
+    # Calcula a posição x e y para centralizar a janela
+    largura_tela = janela.winfo_screenwidth()
+    altura_tela = janela.winfo_screenheight()
+    x = (largura_tela // 2) - (largura // 2)
+    y = (altura_tela // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
 def pesquisar_componente(codigo_componente, projeto, label_nome_componente, label_quantidade, label_quantidade_por_projeto):
     conn = conectar_banco()
+    if conn is None:
+        return
     cursor = conn.cursor()
 
     # Consultar o componente com base no código e no nome do projeto
@@ -51,11 +66,12 @@ def adicionar_estoque(projeto, codigo_componente, quantidade, label_status):
             quantidade = int(quantidade)
         except ValueError:
             label_status.config(text="A quantidade deve ser um número inteiro.", fg="red")
-            # Ocultar o status após 3 segundos (3000 milissegundos)
             label_status.after(3000, lambda: ocultar_status(label_status))
             return
 
         conn = conectar_banco()
+        if conn is None:
+            return
         cursor = conn.cursor()
 
         # Atualizar a quantidade disponível do componente
@@ -75,12 +91,13 @@ def adicionar_estoque(projeto, codigo_componente, quantidade, label_status):
     else:
         label_status.config(text="Preencha todos os campos.", fg="red")
 
-    # Ocultar o status após 3 segundos (3000 milissegundos)
     label_status.after(3000, lambda: ocultar_status(label_status))
 
 # Função para abrir a janela de adicionar estoque
 def abrir_janela():
     conn = conectar_banco()
+    if conn is None:
+        return
     cursor = conn.cursor()
 
     # Obter a lista de projetos do banco de dados
@@ -92,10 +109,11 @@ def abrir_janela():
     janela = tk.Toplevel()
     janela.title("Adicionar Estoque")
     janela.geometry("800x500")
+    centralizar_janela(janela, 800, 500)
 
     # Adicionando logo
     try:
-        logo_path = os.path.join(get_banco_dados_path().replace('estoque.db', ''), 'logo.png')
+        logo_path = os.path.join(basedir, 'logo.png')  # Use o caminho absoluto para a logo
         logo = tk.PhotoImage(file=logo_path)
         logo = logo.subsample(4, 4)
         tk.Label(janela, image=logo).pack(pady=10)
@@ -104,7 +122,7 @@ def abrir_janela():
         print("Erro ao carregar a imagem da logo para adicionar estoque.")
 
     # Adicionando texto abaixo da logo
-    texto = "Adicionar Estoque"
+    texto = "ADICIONAR ESTOQUE"
     tk.Label(janela, text=texto, font=("Arial", 16)).pack(pady=10)
 
     tk.Label(janela, text="Selecione o Projeto:").pack(anchor="w", padx=10, pady=5)

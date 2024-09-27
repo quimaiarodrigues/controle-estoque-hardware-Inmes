@@ -3,10 +3,31 @@ from tkinter import ttk
 import sqlite3
 import os
 
+#caminho_banco = "C:\Users\ICARO\Desktop\Documentos Inmes\estoque.db"
+
+# Obtenha o caminho absoluto do diretório atual
+basedir = os.path.dirname(os.path.abspath(__file__))
+
+# Definir o caminho do banco de dados com base no ambiente
+if os.environ.get("ENVIRONMENT") == "production":
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
+else:
+    caminho_banco = os.path.join(basedir, 'estoque.db')
+
 def conectar_banco():
     """Conecta ao banco de dados SQLite e retorna a conexão."""
-    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'estoque.db')
+    
+    db_path = (caminho_banco)
+   # db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'estoque.db') #PARA SERVIDOR COMENTAR 
     return sqlite3.connect(db_path)
+
+def centralizar_janela(janela, largura, altura):
+    # Calcula a posição x e y para centralizar a janela
+    largura_tela = janela.winfo_screenwidth()
+    altura_tela = janela.winfo_screenheight()
+    x = (largura_tela // 2) - (largura // 2)
+    y = (altura_tela // 2) - (altura // 2)
+    janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
 def obter_lista_projetos():
     """Obtém a lista de nomes de projetos do banco de dados."""
@@ -48,7 +69,9 @@ def obter_componentes_por_projeto(projeto):
 def abrir_aba_listar_componentes(projeto_list):
     janela_listar = tk.Toplevel()
     janela_listar.title("Listar Componentes")
-    janela_listar.geometry("800x550")
+    janela_listar.geometry("820x550")
+
+    centralizar_janela(janela_listar, 820, 550)
 
     # Adicionando logo
     try:
@@ -60,7 +83,7 @@ def abrir_aba_listar_componentes(projeto_list):
         print("Erro ao carregar a imagem da logo para listar componentes.")
 
     # Adicionando texto abaixo da logo
-    texto = "Listar Componentes"
+    texto = "LISTAR COMPONENTES"
     tk.Label(janela_listar, text=texto, font=("Arial", 16)).pack(pady=10)
 
     # Adicionando seleção de projeto
