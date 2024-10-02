@@ -3,19 +3,28 @@ import tkinter as tk
 from tkinter import messagebox
 from tkinter import ttk  # Import para Treeview
 import sqlite3
+import sys
 
 
+# Função para conectar ao banco de dados
 def conectar_banco():
     try:
         # Use o caminho absoluto para garantir que o executável encontre o banco de dados
         conn = sqlite3.connect(caminho_banco)
         return conn
     except sqlite3.Error as e:
-        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados cadstro projeto: {e}")
         return None
 
+# Detecta se está rodando como executável ou como script Python
+if getattr(sys, 'frozen', False):
+    # Está rodando como um executável
+    os.environ["ENVIRONMENT"] = "production"
+else:
+    # Está rodando como script Python normal
+    os.environ["ENVIRONMENT"] = "development"
 
-# Obtenha o caminho absoluto do diretório atual, PARA SERVIDOR COMENTAR 
+# Obtenha o caminho absoluto do diretório atual
 basedir = os.path.dirname(os.path.abspath(__file__))
 
 # Definir o caminho do banco de dados com base no ambiente

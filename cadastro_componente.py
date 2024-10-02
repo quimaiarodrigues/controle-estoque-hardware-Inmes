@@ -4,6 +4,7 @@ import sqlite3
 import os
 import sys
 
+
 # Função para conectar ao banco de dados
 def conectar_banco():
     try:
@@ -11,9 +12,16 @@ def conectar_banco():
         conn = sqlite3.connect(caminho_banco)
         return conn
     except sqlite3.Error as e:
-        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados cadastro componente: {e}")
         return None
 
+# Detecta se está rodando como executável ou como script Python
+if getattr(sys, 'frozen', False):
+    # Está rodando como um executável
+    os.environ["ENVIRONMENT"] = "production"
+else:
+    # Está rodando como script Python normal
+    os.environ["ENVIRONMENT"] = "development"
 
 # Obtenha o caminho absoluto do diretório atual
 basedir = os.path.dirname(os.path.abspath(__file__))

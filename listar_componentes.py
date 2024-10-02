@@ -2,8 +2,29 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3
 import os
+import sys
+from tkinter import messagebox
+from tkinter import PhotoImage, messagebox, ttk
 
-#caminho_banco = "C:\Users\ICARO\Desktop\Documentos Inmes\estoque.db"
+
+
+# Função para conectar ao banco de dados
+def conectar_banco():
+    try:
+        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
+        conn = sqlite3.connect(caminho_banco)
+        return conn
+    except sqlite3.Error as e:
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados listar componentes: {e}")
+        return None
+
+# Detecta se está rodando como executável ou como script Python
+if getattr(sys, 'frozen', False):
+    # Está rodando como um executável
+    os.environ["ENVIRONMENT"] = "production"
+else:
+    # Está rodando como script Python normal
+    os.environ["ENVIRONMENT"] = "development"
 
 # Obtenha o caminho absoluto do diretório atual
 basedir = os.path.dirname(os.path.abspath(__file__))
@@ -13,13 +34,6 @@ if os.environ.get("ENVIRONMENT") == "production":
     caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
 else:
     caminho_banco = os.path.join(basedir, 'estoque.db')
-
-def conectar_banco():
-    """Conecta ao banco de dados SQLite e retorna a conexão."""
-    
-    db_path = (caminho_banco)
-   # db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'estoque.db') #PARA SERVIDOR COMENTAR 
-    return sqlite3.connect(db_path)
 
 def centralizar_janela(janela, largura, altura):
     # Calcula a posição x e y para centralizar a janela
@@ -75,12 +89,14 @@ def abrir_aba_listar_componentes(projeto_list):
 
     # Adicionando logo
     try:
-        logo = tk.PhotoImage(file="logo.png")
+        logo_path = os.path.join(basedir, "logo.png")
+        logo = PhotoImage(file=logo_path)
         logo = logo.subsample(4, 4)
         tk.Label(janela_listar, image=logo).pack(pady=10)
         janela_listar.logo = logo
     except tk.TclError:
         print("Erro ao carregar a imagem da logo para listar componentes.")
+        
 
     # Adicionando texto abaixo da logo
     texto = "LISTAR COMPONENTES"

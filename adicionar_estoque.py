@@ -2,25 +2,35 @@ import os
 import tkinter as tk
 from tkinter import PhotoImage, messagebox
 import sqlite3
+import sys
+
+
+# Função para conectar ao banco de dados
+def conectar_banco():
+    try:
+        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
+        conn = sqlite3.connect(caminho_banco)
+        return conn
+    except sqlite3.Error as e:
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados adicionar estoque: {e}")
+        return None
+
+# Detecta se está rodando como executável ou como script Python
+if getattr(sys, 'frozen', False):
+    # Está rodando como um executável
+    os.environ["ENVIRONMENT"] = "production"
+else:
+    # Está rodando como script Python normal
+    os.environ["ENVIRONMENT"] = "development"
 
 # Obtenha o caminho absoluto do diretório atual
 basedir = os.path.dirname(os.path.abspath(__file__))
 
 # Definir o caminho do banco de dados com base no ambiente
 if os.environ.get("ENVIRONMENT") == "production":
-    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"  # Caminho absoluto em produção
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
 else:
-    caminho_banco = os.path.join(basedir, 'estoque.db')  # Caminho para ambiente de desenvolvimento
-
-# Função para conectar ao banco de dados
-def conectar_banco():
-    try:
-        # Usa o caminho absoluto para garantir que o executável encontre o banco de dados
-        conn = sqlite3.connect(caminho_banco)
-        return conn
-    except sqlite3.Error as e:
-        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
-        return None
+    caminho_banco = os.path.join(basedir, 'estoque.db')
 
 def centralizar_janela(janela, largura, altura):
     # Calcula a posição x e y para centralizar a janela

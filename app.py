@@ -2,25 +2,35 @@ import os
 import tkinter as tk
 from tkinter import PhotoImage, messagebox
 import sqlite3
+import sys
+
 
 # Função para conectar ao banco de dados
 def conectar_banco():
     try:
-        # Usa o caminho absoluto definido pelo ambiente
+        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
         conn = sqlite3.connect(caminho_banco)
         return conn
     except sqlite3.Error as e:
-        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados: {e}")
+        messagebox.showerror("Erro", f"Erro ao conectar ao banco de dados App: {e}")
         return None
+
+# Detecta se está rodando como executável ou como script Python
+if getattr(sys, 'frozen', False):
+    # Está rodando como um executável
+    os.environ["ENVIRONMENT"] = "production"
+else:
+    # Está rodando como script Python normal
+    os.environ["ENVIRONMENT"] = "development"
 
 # Obtenha o caminho absoluto do diretório atual
 basedir = os.path.dirname(os.path.abspath(__file__))
 
 # Definir o caminho do banco de dados com base no ambiente
 if os.environ.get("ENVIRONMENT") == "production":
-    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"  # Caminho absoluto em produção
+    caminho_banco = "C:/Users/ICARO/Desktop/db/estoque.db"
 else:
-    caminho_banco = os.path.join(basedir, 'estoque.db')  # Caminho para ambiente de desenvolvimento
+    caminho_banco = os.path.join(basedir, 'estoque.db')
 
     
 def centralizar_janela(janela, largura, altura):
@@ -35,33 +45,38 @@ def verificar_estoque_minimo():
     if conn:
         with conn:
             cursor = conn.cursor()
+            # Seleciona o nome dos projetos, quantidade disponível, quantidade por placa e limite mínimo
             cursor.execute("""
-                SELECT p.nome, c.quantidade_disponivel, c.quantidade_por_placa, p.limite_minimo
+                SELECT p.id, p.nome, c.quantidade_disponivel, c.quantidade_por_placa, p.limite_minimo
                 FROM Projetos p
                 JOIN Componentes c ON p.id = c.id_projeto
             """)
             componentes = cursor.fetchall()
 
             projetos_com_estoque_baixo = set()
+            mensagem = ""
 
-            for projeto_nome, quantidade_disponivel, quantidade_por_placa, limite_minimo in componentes:
+            for projeto_id, projeto_nome, quantidade_disponivel, quantidade_por_placa, limite_minimo in componentes:
                 if quantidade_disponivel is not None and quantidade_por_placa is not None:
                     montagens_possiveis = quantidade_disponivel // quantidade_por_placa
-                    if montagens_possiveis <= 2:
+                    # Verifica se a quantidade disponível está abaixo do limite mínimo
+                    if quantidade_disponivel <= limite_minimo:
                         projetos_com_estoque_baixo.add(projeto_nome)
+                        mensagem = f"AVISO: O estoque atual de {projeto_nome} é {quantidade_disponivel}, que está igual ou abaixo do limite mínimo ({limite_minimo})."
 
+            # Se houver projetos com estoque baixo, exibe a mensagem
             if projetos_com_estoque_baixo:
                 projetos = ', '.join(projetos_com_estoque_baixo)
-                mensagem = f"AVISO: Estoque insuficiente para o projeto: {projetos}"
-            else:
-                if componentes:
-                    mensagem = ""
-                else:
-                    mensagem = "Nenhum componente cadastrado."
+                mensagem = f"AVISO: Limite mínimo atingido! {projetos}"
+
+            # Se não houver componentes, mostra mensagem apropriada
+            elif not componentes:
+                mensagem = "Nenhum componente cadastrado."
 
             status_label.config(text=mensagem)
 
     root.after(1000, verificar_estoque_minimo)
+
 
 def abrir_cadastro_projeto():
     import cadastro_projeto
