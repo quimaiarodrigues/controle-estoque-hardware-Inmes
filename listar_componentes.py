@@ -30,6 +30,7 @@ if os.environ.get("ENVIRONMENT") == "production":
 else:
     caminho_banco = os.path.join(basedir, 'estoque.db')
 
+# Função para centralizar a janela
 def centralizar_janela(janela, largura, altura):
     largura_tela = janela.winfo_screenwidth()
     altura_tela = janela.winfo_screenheight()
@@ -37,6 +38,7 @@ def centralizar_janela(janela, largura, altura):
     y = (altura_tela // 2) - (altura // 2)
     janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
+# Função para obter a lista de projetos
 def obter_lista_projetos():
     conn = conectar_banco()
     cursor = conn.cursor()
@@ -45,6 +47,7 @@ def obter_lista_projetos():
     conn.close()
     return projetos
 
+# Função para obter componentes de um projeto específico
 def obter_componentes_por_projeto(projeto):
     conn = conectar_banco()
     cursor = conn.cursor()
@@ -68,6 +71,7 @@ def obter_componentes_por_projeto(projeto):
     
     return [{"codigo": row[0], "nome": row[1], "quantidade_por_placa": row[2], "quantidade_disponivel": row[3]} for row in componentes]
 
+# Função para editar a quantidade de um componente
 def editar_quantidade(componente, tabela, projeto_selecionado, janela_listar):
     """Abre uma janela para editar a quantidade por placa do componente selecionado."""
     
@@ -96,11 +100,6 @@ def editar_quantidade(componente, tabela, projeto_selecionado, janela_listar):
             # Atualiza a tabela e o status de estoque após a edição
             atualizar_tabela(tabela, projeto_selecionado, janela_listar)
 
-
- # Imprime a nova quantidade no console (com printf estilo Python)
-            print(f"atualizada para: {nova_quantidade}")
-
-
         except ValueError as ve:
             messagebox.showerror("Erro", str(ve))
         except sqlite3.Error as e:
@@ -127,6 +126,7 @@ def editar_quantidade(componente, tabela, projeto_selecionado, janela_listar):
     # Botão para salvar a nova quantidade
     tk.Button(janela_editar, text="Salvar", command=salvar_edicao).pack(pady=10)
 
+# Função para atualizar a tabela de componentes
 def atualizar_tabela(tabela, projeto_selecionado, janela_listar):
     """Função para atualizar a tabela de componentes exibida na interface."""
     tabela.delete(*tabela.get_children())
@@ -148,6 +148,7 @@ def atualizar_tabela(tabela, projeto_selecionado, janela_listar):
         else:
             atualizar_tabela.mensagem_label.config(text=f"Nenhum componente encontrado para o projeto '{projeto}'.")
 
+# Função para abrir a janela de listagem de componentes
 def abrir_aba_listar_componentes(projeto_list):
     janela_listar = tk.Toplevel()
     janela_listar.title("Listar Componentes")
@@ -168,8 +169,14 @@ def abrir_aba_listar_componentes(projeto_list):
     tk.Label(janela_listar, text=texto, font=("Arial", 16)).pack(pady=10)
 
     tk.Label(janela_listar, text="Selecione o Projeto:").pack(anchor="w", padx=10, pady=5)
+    
+    # Aqui adicionamos o OptionMenu para selecionar o projeto
     projeto_selecionado = tk.StringVar()
-    projeto_selecionado.set(projeto_list[0] if projeto_list else "Nenhum Projeto")
+    projeto_menu = tk.OptionMenu(janela_listar, projeto_selecionado, *projeto_list)
+    projeto_menu.pack(fill="x", padx=10, pady=5)
+
+    if projeto_list:
+        projeto_selecionado.set(projeto_list[0])  # Seleciona o primeiro projeto por padrão
 
     frame_tabela = tk.Frame(janela_listar)
     frame_tabela.pack(fill="both", expand=True, padx=10, pady=10)
@@ -211,17 +218,28 @@ def abrir_aba_listar_componentes(projeto_list):
             "codigo": item["values"][0],
             "nome": item["values"][1],
             "quantidade_por_placa": item["values"][2],
-            "quantidade_disponivel": item["values"][3]
+                        "quantidade_disponivel": item["values"][3]
         }
         editar_quantidade(componente, tabela, projeto_selecionado, janela_listar)
 
     # Botão para editar a quantidade do componente selecionado
     tk.Button(frame_botoes, text="Editar Quantidade", command=editar_componente).pack(side="left", padx=10)
 
+    # Botão para fechar a janela
     tk.Button(frame_botoes, text="Cancelar", command=janela_listar.destroy).pack(side="left", padx=10)
 
     janela_listar.mainloop()
 
+# Função para abrir a listagem de componentes
 def abrir_listar_componentes():
     projetos = obter_lista_projetos()  # Obtém a lista de projetos
-    abrir_aba_listar_componentes(projetos)
+    if projetos:
+        abrir_aba_listar_componentes(projetos)
+    else:
+        messagebox.showwarning("Atenção", "Nenhum projeto encontrado no banco de dados.")
+
+# Exemplo de uso: Chamar a função para listar componentes (seria chamada a partir da interface principal)
+# root = tk.Tk()
+# abrir_listar_componentes()
+# root.mainloop()
+

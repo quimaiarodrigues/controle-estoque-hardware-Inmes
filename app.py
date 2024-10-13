@@ -68,7 +68,7 @@ def verificar_estoque_minimo():
             # Se houver projetos com estoque baixo, exibe a mensagem
             if projetos_com_estoque_baixo:
                 projetos = ', '.join(projetos_com_estoque_baixo)
-                mensagem = f"AVISO: Limite mínimo atingido! {projetos}"
+                mensagem = f"AVISO: Estoque mínimo atingido! {projetos}"
 
             # Se não houver componentes, mostra mensagem apropriada
             elif not componentes:
@@ -79,8 +79,6 @@ def verificar_estoque_minimo():
 
     # Chama a função novamente após 1000 ms
     root.after(1000, verificar_estoque_minimo)
-    print(f"quantidade_por_placa atualizada para: {quantidade_por_placa}")
-    print(f"limite_minimo atualizada para: {limite_minimo}")
 
 
 
@@ -109,6 +107,11 @@ def abrir_debitar_componentes():
     import debitar_componentes
     debitar_componentes.debitar_componentes()
 
+# Função para abrir a nova janela de carregar arquivo XLS
+def abrir_carregar_arquivo():
+    import carregar_arquivo
+    carregar_arquivo.abrir_janela_carregar()    
+
 if os.environ.get("ENVIRONMENT") == "production":
     print("Modo Produção Ativado")
 else:
@@ -117,8 +120,8 @@ else:
 # Criação da janela principal
 root = tk.Tk()
 root.title("Controle de Estoque")
-root.geometry("800x450")
-centralizar_janela(root, 800, 450)
+root.geometry("800x500")
+centralizar_janela(root, 800, 500)
 
 # Adicionando logo
 try:
@@ -153,9 +156,14 @@ button_deletar_componente.grid(row=4, column=0, padx=10, pady=10, sticky="nsew")
 button_debitar_componentes = tk.Button(root, text="Debitar Componentes", width=20, command=abrir_debitar_componentes)
 button_debitar_componentes.grid(row=4, column=1, padx=10, pady=10, sticky="nsew")
 
+# Adicionar o botão na tela principal para abrir a nova funcionalidade
+button_carregar_arquivo = tk.Button(root, text="Carregar Arquivo XLS", width=20, command=abrir_carregar_arquivo, fg="white", bg="green")
+button_carregar_arquivo.grid(row=5, column=0, columnspan=2, padx=10, pady=10, sticky="n")  # 'n' para centralizar horizontalmente
+
+
 # Adicionando um label para mostrar o status de estoque
 status_label = tk.Label(root, text="Verificando estoque...", font=("Arial", 12), fg="red")
-status_label.grid(row=5, column=0, columnspan=2, pady=10)
+status_label.grid(row=6, column=0, columnspan=2, pady=10)
 
 # Chama a função para verificar o estoque mínimo inicialmente
 verificar_estoque_minimo()
@@ -177,3 +185,4 @@ root.grid_rowconfigure(6, weight=1)
 
 # Inicia a interface principal
 root.mainloop()
+
