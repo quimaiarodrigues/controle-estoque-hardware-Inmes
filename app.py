@@ -58,9 +58,10 @@ def verificar_estoque_minimo():
 
             for projeto_id, projeto_nome, quantidade_disponivel, quantidade_por_placa, limite_minimo in componentes:
                 if quantidade_disponivel is not None and quantidade_por_placa is not None:
+                    # Calcular montagens possíveis
                     montagens_possiveis = quantidade_disponivel // quantidade_por_placa
                     # Verifica se a quantidade disponível está abaixo do limite mínimo
-                    if quantidade_disponivel <= limite_minimo:
+                    if montagens_possiveis <= limite_minimo:
                         projetos_com_estoque_baixo.add(projeto_nome)
                         mensagem = f"AVISO: O estoque atual de {projeto_nome} é {quantidade_disponivel}, que está igual ou abaixo do limite mínimo ({limite_minimo})."
 
@@ -73,9 +74,14 @@ def verificar_estoque_minimo():
             elif not componentes:
                 mensagem = "Nenhum componente cadastrado."
 
+            # Atualiza o label de status
             status_label.config(text=mensagem)
 
+    # Chama a função novamente após 1000 ms
     root.after(1000, verificar_estoque_minimo)
+    print(f"quantidade_por_placa atualizada para: {quantidade_por_placa}")
+    print(f"limite_minimo atualizada para: {limite_minimo}")
+
 
 
 def abrir_cadastro_projeto():
@@ -125,7 +131,7 @@ except tk.TclError:
     print("Erro ao carregar a imagem do logotipo para a página principal.")
 
 # Adicionando texto abaixo do logotipo
-texto = "CONTROLE DO ESTOQUE DE HARDWARE P&D"
+texto = "ESTOQUE DE HARDWARE P&D"
 tk.Label(root, text=texto, font=("Arial", 18)).grid(row=1, column=0, columnspan=2, pady=10)
 
 # Adicionando botões à janela principal

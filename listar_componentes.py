@@ -4,14 +4,11 @@ import sqlite3
 import os
 import sys
 from tkinter import messagebox
-from tkinter import PhotoImage, messagebox, ttk
-
-
+from tkinter import PhotoImage
 
 # Função para conectar ao banco de dados
 def conectar_banco():
     try:
-        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
         conn = sqlite3.connect(caminho_banco)
         return conn
     except sqlite3.Error as e:
@@ -20,10 +17,8 @@ def conectar_banco():
 
 # Detecta se está rodando como executável ou como script Python
 if getattr(sys, 'frozen', False):
-    # Está rodando como um executável
     os.environ["ENVIRONMENT"] = "production"
 else:
-    # Está rodando como script Python normal
     os.environ["ENVIRONMENT"] = "development"
 
 # Obtenha o caminho absoluto do diretório atual
@@ -36,7 +31,6 @@ else:
     caminho_banco = os.path.join(basedir, 'estoque.db')
 
 def centralizar_janela(janela, largura, altura):
-    # Calcula a posição x e y para centralizar a janela
     largura_tela = janela.winfo_screenwidth()
     altura_tela = janela.winfo_screenheight()
     x = (largura_tela // 2) - (largura // 2)
@@ -44,7 +38,6 @@ def centralizar_janela(janela, largura, altura):
     janela.geometry(f"{largura}x{altura}+{x}+{y}")
 
 def obter_lista_projetos():
-    """Obtém a lista de nomes de projetos do banco de dados."""
     conn = conectar_banco()
     cursor = conn.cursor()
     cursor.execute("SELECT nome FROM Projetos")
@@ -53,11 +46,8 @@ def obter_lista_projetos():
     return projetos
 
 def obter_componentes_por_projeto(projeto):
-    """Obtém a lista de componentes para um projeto específico."""
     conn = conectar_banco()
     cursor = conn.cursor()
-
-    # Buscar o ID do projeto
     cursor.execute("SELECT id FROM Projetos WHERE nome = ?", (projeto,))
     projeto_id = cursor.fetchone()
     
@@ -67,8 +57,7 @@ def obter_componentes_por_projeto(projeto):
 
     projeto_id = projeto_id[0]
     
-    # Buscar componentes para o projeto
-    cursor.execute("""
+    cursor.execute(""" 
         SELECT codigo, nome, quantidade_por_placa, quantidade_disponivel 
         FROM Componentes 
         WHERE id_projeto = ?
@@ -77,8 +66,87 @@ def obter_componentes_por_projeto(projeto):
     componentes = cursor.fetchall()
     conn.close()
     
-    # Formatar os resultados
     return [{"codigo": row[0], "nome": row[1], "quantidade_por_placa": row[2], "quantidade_disponivel": row[3]} for row in componentes]
+
+def editar_quantidade(componente, tabela, projeto_selecionado, janela_listar):
+    """Abre uma janela para editar a quantidade por placa do componente selecionado."""
+    
+    def salvar_edicao():
+        nova_quantidade = entry_quantidade.get()
+        try:
+            nova_quantidade = int(nova_quantidade)
+            if nova_quantidade < 0:
+                raise ValueError("A quantidade não pode ser negativa.")
+            
+            # Conectar ao banco de dados e atualizar a quantidade
+            conn = conectar_banco()
+            cursor = conn.cursor()
+            cursor.execute(""" 
+                UPDATE Componentes
+                SET quantidade_por_placa = ?
+                WHERE codigo = ?
+            """, (nova_quantidade, componente["codigo"]))
+            conn.commit()
+            conn.close()
+
+            # Exibir mensagem de sucesso
+            messagebox.showinfo("Sucesso", "Quantidade atualizada com sucesso!")
+            janela_editar.destroy()
+
+            # Atualiza a tabela e o status de estoque após a edição
+            atualizar_tabela(tabela, projeto_selecionado, janela_listar)
+
+
+ # Imprime a nova quantidade no console (com printf estilo Python)
+            print(f"atualizada para: {nova_quantidade}")
+
+
+        except ValueError as ve:
+            messagebox.showerror("Erro", str(ve))
+        except sqlite3.Error as e:
+            messagebox.showerror("Erro", f"Erro ao atualizar quantidade: {e}")
+    
+    # Janela para editar a quantidade
+    janela_editar = tk.Toplevel()
+    janela_editar.title("Editar Quantidade")
+    janela_editar.geometry("300x200")
+
+    centralizar_janela(janela_editar, 300, 200)
+
+    # Exibir informações do componente
+    tk.Label(janela_editar, text=f"Editar quantidade para {componente['nome']} ({componente['codigo']})").pack(pady=10)
+
+    # Campo de entrada para nova quantidade
+    tk.Label(janela_editar, text="Nova Quantidade:").pack(pady=5)
+    entry_quantidade = tk.Entry(janela_editar)
+    entry_quantidade.pack(pady=5)
+    entry_quantidade.insert(0, componente["quantidade_por_placa"])  # Preencher com a quantidade atual
+
+    entry_quantidade.focus_set()  # Colocar o foco no campo de entrada
+
+    # Botão para salvar a nova quantidade
+    tk.Button(janela_editar, text="Salvar", command=salvar_edicao).pack(pady=10)
+
+def atualizar_tabela(tabela, projeto_selecionado, janela_listar):
+    """Função para atualizar a tabela de componentes exibida na interface."""
+    tabela.delete(*tabela.get_children())
+    projeto = projeto_selecionado.get()
+    componentes = obter_componentes_por_projeto(projeto)
+    
+    if componentes:
+        for componente in componentes:
+            tabela.insert("", "end", values=(
+                componente["codigo"],
+                componente["nome"],
+                componente["quantidade_por_placa"],
+                componente["quantidade_disponivel"]
+            ))
+    else:
+        if not hasattr(atualizar_tabela, 'mensagem_label'):
+            atualizar_tabela.mensagem_label = tk.Label(janela_listar, text=f"Nenhum componente encontrado para o projeto '{projeto}'.")
+            atualizar_tabela.mensagem_label.pack(pady=10)
+        else:
+            atualizar_tabela.mensagem_label.config(text=f"Nenhum componente encontrado para o projeto '{projeto}'.")
 
 def abrir_aba_listar_componentes(projeto_list):
     janela_listar = tk.Toplevel()
@@ -87,7 +155,6 @@ def abrir_aba_listar_componentes(projeto_list):
 
     centralizar_janela(janela_listar, 820, 550)
 
-    # Adicionando logo
     try:
         logo_path = os.path.join(basedir, "logo.png")
         logo = PhotoImage(file=logo_path)
@@ -96,25 +163,17 @@ def abrir_aba_listar_componentes(projeto_list):
         janela_listar.logo = logo
     except tk.TclError:
         print("Erro ao carregar a imagem da logo para listar componentes.")
-        
 
-    # Adicionando texto abaixo da logo
     texto = "LISTAR COMPONENTES"
     tk.Label(janela_listar, text=texto, font=("Arial", 16)).pack(pady=10)
 
-    # Adicionando seleção de projeto
     tk.Label(janela_listar, text="Selecione o Projeto:").pack(anchor="w", padx=10, pady=5)
     projeto_selecionado = tk.StringVar()
     projeto_selecionado.set(projeto_list[0] if projeto_list else "Nenhum Projeto")
 
-    menu_projeto = tk.OptionMenu(janela_listar, projeto_selecionado, *projeto_list)
-    menu_projeto.pack(fill="x", padx=10, pady=5)
-
-    # Frame para tabela de componentes
     frame_tabela = tk.Frame(janela_listar)
     frame_tabela.pack(fill="both", expand=True, padx=10, pady=10)
 
-    # Barra de rolagem
     scrollbar = tk.Scrollbar(frame_tabela)
     scrollbar.pack(side="right", fill="y")
 
@@ -123,7 +182,6 @@ def abrir_aba_listar_componentes(projeto_list):
     
     scrollbar.config(command=tabela.yview)
 
-    # Definindo cabeçalhos da tabela
     for coluna in colunas:
         tabela.heading(coluna, text=coluna)
         if coluna in ("Código", "Quantidade por Placa", "Quantidade Disponível"):
@@ -133,31 +191,33 @@ def abrir_aba_listar_componentes(projeto_list):
 
     tabela.pack(fill="both", expand=True)
 
-    # Populando a tabela
-    def atualizar_tabela():
-        tabela.delete(*tabela.get_children())
-        projeto = projeto_selecionado.get()
-        componentes = obter_componentes_por_projeto(projeto)
-        
-        if componentes:
-            for componente in componentes:
-                tabela.insert("", "end", values=(
-                    componente["codigo"],
-                    componente["nome"],
-                    componente["quantidade_por_placa"],
-                    componente["quantidade_disponivel"]
-                ))
-        else:
-            tk.Label(janela_listar, text=f"Nenhum componente encontrado para o projeto '{projeto}'.").pack(pady=10)
+    # Chama a função atualizar_tabela para preencher a tabela pela primeira vez
+    atualizar_tabela(tabela, projeto_selecionado, janela_listar)
 
-    # Frame para botões "Atualizar" e "Cancelar"
+    # Frame para botões "Atualizar", "Editar" e "Cancelar"
     frame_botoes = tk.Frame(janela_listar)
     frame_botoes.pack(pady=10)
 
-    # Botão para atualizar a tabela
-    tk.Button(frame_botoes, text="Atualizar", command=atualizar_tabela).pack(side="left", padx=10)
+    tk.Button(frame_botoes, text="Atualizar", command=lambda: atualizar_tabela(tabela, projeto_selecionado, janela_listar)).pack(side="left", padx=10)
 
-    # Botão para cancelar e fechar a janela
+    def editar_componente():
+        selecionado = tabela.selection()
+        if not selecionado:
+            messagebox.showwarning("Atenção", "Selecione um componente para editar.")
+            return
+        
+        item = tabela.item(selecionado)
+        componente = {
+            "codigo": item["values"][0],
+            "nome": item["values"][1],
+            "quantidade_por_placa": item["values"][2],
+            "quantidade_disponivel": item["values"][3]
+        }
+        editar_quantidade(componente, tabela, projeto_selecionado, janela_listar)
+
+    # Botão para editar a quantidade do componente selecionado
+    tk.Button(frame_botoes, text="Editar Quantidade", command=editar_componente).pack(side="left", padx=10)
+
     tk.Button(frame_botoes, text="Cancelar", command=janela_listar.destroy).pack(side="left", padx=10)
 
     janela_listar.mainloop()
