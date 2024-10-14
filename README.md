@@ -24,7 +24,7 @@ Banco de Dados : SQLite
 
 Interface Gráfica : Visual Studio Code
 
-Bibliotecas : PyInstaller (para criação do novovel), Pandas (para manipulação de dados)
+Bibliotecas : PyInstaller (para criação), Pandas (para manipulação de dados)
 
 Instalação e Configuração
 
