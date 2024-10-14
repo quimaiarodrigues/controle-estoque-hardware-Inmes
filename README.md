@@ -3,6 +3,7 @@
 Autor: Icaro Dão Quimaia Rodrigues  14/10/2024
 
 Controle de Estoque de Componentes - INMES
+
 Este projeto foi desenvolvido para o INMES , com o objetivo de facilitar e otimizar o controle de estoque de componentes eletrônicos usados ​​na montagem de máquinas de marcenaria. O sistema permite gerenciar o cadastro de componentes, controlar o estoque, registrar o uso de componentes em projetos específicos e emitir alertas sobre a disponibilidade de peças.
 
 Funcionalidades
