@@ -4,6 +4,7 @@ from tkinter import PhotoImage, messagebox
 import sqlite3
 import sys
 
+#finalizado
 
 # Função para conectar ao banco de dados
 def conectar_banco():

@@ -4,11 +4,12 @@ from tkinter import PhotoImage, messagebox
 import sqlite3
 import sys
 
+#finalizado
 
 # Função para conectar ao banco de dados
 def conectar_banco():
     try:
-        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
+        # Caminho absoluto para garantir que o executável encontre o banco de dados
         conn = sqlite3.connect(caminho_banco)
         return conn
     except sqlite3.Error as e:
@@ -23,7 +24,7 @@ else:
     # Está rodando como script Python normal
     os.environ["ENVIRONMENT"] = "development"
 
-# Obtenha o caminho absoluto do diretório atual
+# Obtem o caminho absoluto do diretório atual
 basedir = os.path.dirname(os.path.abspath(__file__))
 
 # Definir o caminho do banco de dados com base no ambiente
@@ -123,7 +124,7 @@ def abrir_janela():
 
     # Adicionando logo
     try:
-        logo_path = os.path.join(basedir, 'logo.png')  # Use o caminho absoluto para a logo
+        logo_path = os.path.join(basedir, 'logo.png')  # Caminho absoluto para a logo
         logo = tk.PhotoImage(file=logo_path)
         logo = logo.subsample(4, 4)
         tk.Label(janela, image=logo).pack(pady=10)
@@ -131,7 +132,7 @@ def abrir_janela():
     except tk.TclError:
         print("Erro ao carregar a imagem da logo para adicionar estoque.")
 
-    # Adicionando texto abaixo da logo
+    # Texto abaixo da logo
     texto = "ADICIONAR ESTOQUE"
     tk.Label(janela, text=texto, font=("Arial", 16)).pack(pady=10)
 

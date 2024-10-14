@@ -5,6 +5,8 @@ import sqlite3
 import os
 import sys
 
+#finalizado
+
 # Função para conectar ao banco de dados
 def conectar_banco():
     try:

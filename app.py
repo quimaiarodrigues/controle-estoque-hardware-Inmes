@@ -4,11 +4,12 @@ from tkinter import PhotoImage, messagebox
 import sqlite3
 import sys
 
+#finalizado
 
 # Função para conectar ao banco de dados
 def conectar_banco():
     try:
-        # Use o caminho absoluto para garantir que o executável encontre o banco de dados
+        # Caminho absoluto para garantir que o executável encontre o banco de dados
         conn = sqlite3.connect(caminho_banco)
         return conn
     except sqlite3.Error as e:

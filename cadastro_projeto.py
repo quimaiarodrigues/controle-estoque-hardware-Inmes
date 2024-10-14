@@ -5,6 +5,7 @@ from tkinter import ttk  # Import para Treeview
 import sqlite3
 import sys
 
+#finalizado
 
 # Função para conectar ao banco de dados
 def conectar_banco():

@@ -6,6 +6,8 @@ import sys
 from tkinter import messagebox
 from tkinter import PhotoImage
 
+#finalizado
+
 # Função para conectar ao banco de dados
 def conectar_banco():
     try:

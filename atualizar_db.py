@@ -3,6 +3,7 @@ import os
 from tkinter import messagebox
 import sys
 
+#finalizado 
 
 # Função para conectar ao banco de dados
 def conectar_banco():
