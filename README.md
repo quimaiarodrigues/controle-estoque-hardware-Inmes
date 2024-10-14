@@ -37,10 +37,10 @@ Instale as Dependências : Certifique-se de que o Python e o pip estão instalad
 python -m pip install -r requirements.txt
 
 Execução do Sistema : Para executar o sistema, basta rodar o arquivo principal:
-python main.py
+python app.py
 
 Criação do Executável : Para gerar o seguintevel, use o comando:
-pyinstaller --onefile main.py
+pyinstaller --onefile app.py
 
 
 Contribuição
