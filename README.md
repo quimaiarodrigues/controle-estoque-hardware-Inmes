@@ -29,7 +29,8 @@ Bibliotecas : PyInstaller (para criação do novovel), Pandas (para manipulaçã
 Instalação e Configuração
 
 Clone o Repositório : 
-git clone https://github.com/usuario/inmes-estoque-componentes.git
+[git clone https://github.com/usuario/inmes-estoque-componentes.git](https://github.com/quimaiarodrigues/controle-estoque-hardware-Inmes?tab=readme-ov-file)
+
 cd inmes-estoque-componentes
 
 Instale as Dependências : Certifique-se de que o Python e o pip estão instalados. Em seguida, execute:
